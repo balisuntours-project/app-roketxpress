@@ -1,0 +1,26 @@
+*/config/development
+*/logs/log-*.php
+!*/logs/index.html
+*/cache/*
+!system/cache/*
+!*/cache/index.html
+!*/cache/.htaccess
+
+user_guide_src/build/*
+user_guide_src/cilexer/build/*
+user_guide_src/cilexer/dist/*
+user_guide_src/cilexer/pycilexer.egg-info/*
+
+#codeigniter 3
+application/logs/*
+!application/logs/index.html
+!application/logs/.htaccess
+/vendor/
+ - Copy.env
+.env
+.htaccess
+apps/config/*.json
+apps/config/bst-backup-67d0c-firebase-adminsdk-inhub-4b65191a09.json
+apps/config/bst-operator-apps-firebase-adminsdk-o60pc-ccda62cde2.json
+apps/config/bst-webapp-firebase-adminsdk-e0pnj-37fa52e6f3.json
+apps/config/sunday-c3e2c-firebase-adminsdk-96f7z-6bbe5e27a4.json
