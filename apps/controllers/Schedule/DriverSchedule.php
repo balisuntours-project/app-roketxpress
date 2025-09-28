@@ -784,28 +784,29 @@ class DriverSchedule extends CI_controller {
 		$dateDayOffStr		=	$dateDayOff->format('d M Y');
 		$monthYearDayOffStr	=	$dateDayOff->format('M Y');
 		$dayOffYearMonth	=	substr($dayOffDate, 0, 7);
-		$dataDayOffLimit	=	$this->getDataDayOffLimit($dayOffDate);
 		
-		if($dataDayOffLimit['isLimited']){
-			setResponseForbidden(
-				array(
-					"token"	=>	$this->newToken,
-					"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off has exceeded the limit allowed (<b>".$dataDayOffLimit['maxDayOffNumber']."</b>) for the selected date"
-				)
-			);
-		}
+		/**** DISABLE DRIVER OFF QUOTA PER DATE LIMIT ****/
+		// $dataDayOffLimit	=	$this->getDataDayOffLimit($dayOffDate);
+		// if($dataDayOffLimit['isLimited']){
+		// 	setResponseForbidden(
+		// 		array(
+		// 			"token"	=>	$this->newToken,
+		// 			"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off has exceeded the limit allowed (<b>".$dataDayOffLimit['maxDayOffNumber']."</b>) for the selected date"
+		// 		)
+		// 	);
+		// }		
 		
-		$dayOffLimitDriver	=	$this->ModelDriverSchedule->getTotalDayOffDriverInMonth($idDriver, $dayOffYearMonth);
-		$dayOffLimitSetting	=	$this->MainOperation->getValueSystemSettingVariable(11);
-		
-		if($dayOffLimitDriver >= $dayOffLimitSetting && ($partnershipType == 1 || $partnershipType == 4)){
-			setResponseForbidden(
-				array(
-					"token"	=>	$this->newToken,
-					"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off for this driver in <b>".$monthYearDayOffStr."</b> has reached its maximum limit <b>[".$dayOffLimitSetting."]</b>"
-				)
-			);
-		}
+		/**** DISABLE DRIVER OFF QUOTA FOR DRIVER IN 1 MONTH LIMIT ****/
+		// $dayOffLimitDriver	=	$this->ModelDriverSchedule->getTotalDayOffDriverInMonth($idDriver, $dayOffYearMonth);
+		// $dayOffLimitSetting	=	$this->MainOperation->getValueSystemSettingVariable(11);
+		// if($dayOffLimitDriver >= $dayOffLimitSetting && ($partnershipType == 1 || $partnershipType == 4)){
+		// 	setResponseForbidden(
+		// 		array(
+		// 			"token"	=>	$this->newToken,
+		// 			"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off for this driver in <b>".$monthYearDayOffStr."</b> has reached its maximum limit <b>[".$dayOffLimitSetting."]</b>"
+		// 		)
+		// 	);
+		// }
 		
 		$dataUserAdmin		=	$this->MainOperation->getDataUserAdmin($this->newToken);
 		$userAdminName		=	$dataUserAdmin['NAME'];
@@ -819,7 +820,6 @@ class DriverSchedule extends CI_controller {
 		if(!$procUpdateRquest['status']){
 			switchMySQLErrorCode($procUpdateRquest['errCode'], $this->newToken);
 		}
-		
 		
 		if($dayOffDetails){
 			
@@ -1073,7 +1073,6 @@ class DriverSchedule extends CI_controller {
 		$this->load->model('MainOperation');
 		$this->load->model('Schedule/ModelDriverSchedule');
 		
-		$level				=	validatePostVar($this->postVar, 'LEVEL', true);
 		$idDriver			=	validatePostVar($this->postVar, 'idData', true);
 		$params				=	validatePostVar($this->postVar, 'params', true);
 		$params				=	explode("|", $params);
@@ -1090,41 +1089,43 @@ class DriverSchedule extends CI_controller {
 			setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Day off date can not be less than today"));
 		}
 		
-		$dataDayOffLimit	=	$this->getDataDayOffLimit($dayOffDate);
-		if($dataDayOffLimit['isLimited']){
-			setResponseForbidden(
-				array(
-					"token"	=>	$this->newToken,
-					"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off has exceeded the limit allowed (<b>".$dataDayOffLimit['maxDayOffNumber']."</b>) for the selected date"
-				)
-			);
-		}
+		/**** DISABLE DAY OFF QUOTA PER DAY LIMIT ****/
+		// $dataDayOffLimit	=	$this->getDataDayOffLimit($dayOffDate);
+		// if($dataDayOffLimit['isLimited']){
+		// 	setResponseForbidden(
+		// 		array(
+		// 			"token"	=>	$this->newToken,
+		// 			"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off has exceeded the limit allowed (<b>".$dataDayOffLimit['maxDayOffNumber']."</b>) for the selected date"
+		// 		)
+		// 	);
+		// }
 		
-		$dayOffYearMonth	=	substr($dayOffDate, 0, 7);
-		$dayOffLimitDriver	=	$this->ModelDriverSchedule->getTotalDayOffDriverInMonth($idDriver, $dayOffYearMonth);
-		$dayOffLimitSetting	=	$this->MainOperation->getValueSystemSettingVariable(11);
-		$detailDriver		=	$this->MainOperation->getDataDriver($idDriver);
-		$partnershipType	=	$detailDriver['PARTNERSHIPTYPE'];
+		/**** DISABLE DRIVER OFF QUOTA FOR DRIVER IN 1 MONTH LIMIT ****/
+		// $dayOffYearMonth	=	substr($dayOffDate, 0, 7);
+		// $dayOffLimitDriver	=	$this->ModelDriverSchedule->getTotalDayOffDriverInMonth($idDriver, $dayOffYearMonth);
+		// $dayOffLimitSetting	=	$this->MainOperation->getValueSystemSettingVariable(11);
+		// $detailDriver		=	$this->MainOperation->getDataDriver($idDriver);
+		// $partnershipType	=	$detailDriver['PARTNERSHIPTYPE'];
 		
-		if($dayOffLimitDriver >= $dayOffLimitSetting && ($partnershipType == 1 || $partnershipType == 4) && $level != 1){
-			setResponseForbidden(
-				array(
-					"token"	=>	$this->newToken,
-					"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off for this driver in <b>".$monthYearDayOffStr."</b> has reached its maximum limit <b>[".$dayOffLimitSetting."]</b>"
-				)
-			);
-		}
+		// if($dayOffLimitDriver >= $dayOffLimitSetting && ($partnershipType == 1 || $partnershipType == 4)){
+		// 	setResponseForbidden(
+		// 		array(
+		// 			"token"	=>	$this->newToken,
+		// 			"msg"	=>	"Day off input is no longer allowed.<br/>The number of days off for this driver in <b>".$monthYearDayOffStr."</b> has reached its maximum limit <b>[".$dayOffLimitSetting."]</b>"
+		// 		)
+		// 	);
+		// }
 		
 		$arrInsertRequest	=	array(
-									"IDDRIVER"			=>	$idDriver,
-									"IDCARVENDOR"		=>	0,
-									"DATEDAYOFF"		=>	$dayOffDate,
-									"REASON"			=>	$reason.". Input by ".$userAdminName." (Admin)",
-									"DATETIMEINPUT"		=>	date('Y-m-d H:i:s'),
-									"STATUS"			=>	1,
-									"DATETIMEAPPROVAL"	=>	date('Y-m-d H:i:s'),
-									"USERAPPROVAL"		=>	$userAdminName
-								);
+			"IDDRIVER"			=>	$idDriver,
+			"IDCARVENDOR"		=>	0,
+			"DATEDAYOFF"		=>	$dayOffDate,
+			"REASON"			=>	$reason.". Input by ".$userAdminName." (Admin)",
+			"DATETIMEINPUT"		=>	date('Y-m-d H:i:s'),
+			"STATUS"			=>	1,
+			"DATETIMEAPPROVAL"	=>	date('Y-m-d H:i:s'),
+			"USERAPPROVAL"		=>	$userAdminName
+		);
 		$procInsertRequest	=	$this->MainOperation->addData("t_dayoffrequest", $arrInsertRequest);
 	
 		if(!$procInsertRequest['status']){

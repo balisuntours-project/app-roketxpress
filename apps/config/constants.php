@@ -77,7 +77,7 @@ $url			=	$_SERVER['HTTP_HOST'];
 $domain			=	explode(".",$_SERVER['HTTP_HOST']);
 $subdomain		=	$domain[0];
 $subdomain		=	$subdomain == $_ENV['DOMAIN_SUB_MAIN'] ? "" : $subdomain.".";
-$productionURL	=	$subdomain == "" ? true : false;
+$productionURL	=	ENVIRONMENT == 'production' ? true : false;
 
 $arrMonth		=	array(
 	array("ID"=>"01", "VALUE"=>"January"),

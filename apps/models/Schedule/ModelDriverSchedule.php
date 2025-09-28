@@ -181,18 +181,19 @@ class ModelDriverSchedule extends CI_Model {
 		$conditionStatus	=	isset($dayOffStatus) && $dayOffStatus != '' ? 'A.STATUS = '.$dayOffStatus : '1=1';
 		$conditionKeyword	=	isset($searchKeyword) && $searchKeyword != '' ? "(B.NAME LIKE '%".$searchKeyword."% OR A.REASON LIKE '%".$searchKeyword."%' OR A.USERAPPROVAL LIKE '%".$searchKeyword."%')" : '1=1';
 		
-		$baseQuery	=	sprintf("SELECT A.IDDAYOFFREQUEST, B.NAME AS DRIVERNAME, C.DRIVERTYPE, DATE_FORMAT(A.DATEDAYOFF, '%s') AS DATEDAYOFF,
-										A.REASON, DATE_FORMAT(A.DATETIMEINPUT, '%s') AS DATETIMEINPUT, A.STATUS,
-										IF(A.DATETIMEAPPROVAL = '0000-00-00 00:00:00', '-', DATE_FORMAT(A.DATETIMEAPPROVAL, '%s')) AS DATETIMEAPPROVAL,
-										IFNULL(A.USERAPPROVAL, '-') AS USERAPPROVAL
-								FROM t_dayoffrequest A
-								LEFT JOIN m_driver B ON A.IDDRIVER = B.IDDRIVER
-								LEFT JOIN m_drivertype C ON B.IDDRIVERTYPE = C.IDDRIVERTYPE
-								WHERE ".$conditionMain." AND ".$conditionStatus." AND ".$conditionKeyword." AND A.IDDRIVER != 0
-								ORDER BY A.DATEDAYOFF, B.NAME"
-								, '%d %b %Y'
-								, '%d %b %Y %H:%i'
-								, '%d %b %Y %H:%i'
+		$baseQuery	=	sprintf(
+							"SELECT A.IDDAYOFFREQUEST, B.NAME AS DRIVERNAME, C.DRIVERTYPE, DATE_FORMAT(A.DATEDAYOFF, '%s') AS DATEDAYOFF,
+									A.REASON, A.DAYOFFQUOTAEXCEED, A.DRIVERLIMITEXCEED, DATE_FORMAT(A.DATETIMEINPUT, '%s') AS DATETIMEINPUT, A.STATUS,
+									IF(A.DATETIMEAPPROVAL = '0000-00-00 00:00:00', '-', DATE_FORMAT(A.DATETIMEAPPROVAL, '%s')) AS DATETIMEAPPROVAL,
+									IFNULL(A.USERAPPROVAL, '-') AS USERAPPROVAL
+							FROM t_dayoffrequest A
+							LEFT JOIN m_driver B ON A.IDDRIVER = B.IDDRIVER
+							LEFT JOIN m_drivertype C ON B.IDDRIVERTYPE = C.IDDRIVERTYPE
+							WHERE ".$conditionMain." AND ".$conditionStatus." AND ".$conditionKeyword." AND A.IDDRIVER != 0
+							ORDER BY A.DATEDAYOFF, B.NAME"
+							, '%d %b %Y'
+							, '%d %b %Y %H:%i'
+							, '%d %b %Y %H:%i'
 						);
 		$query		=	$this->db->query($baseQuery);
 		$result		=	$query->result();
