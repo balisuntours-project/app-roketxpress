@@ -167,7 +167,7 @@ class MainOperation extends CI_Model {
 	
 	public function getDataReservationType(){
 		$query	=	$this->db->query(
-						"SELECT IDRESERVATIONTYPE, RESERVATIONTYPE, TITLEKEYWORDS, TITLEKEYWORDSEXCLUTION, EMAILADDRESS FROM m_reservationtype
+						"SELECT IDRESERVATIONTYPE, RESERVATIONTYPE, TITLEKEYWORDS, TITLEKEYWORDSEXCLUTION, EMAILADDRESS, ISINCLUDETRANSPORT FROM m_reservationtype
 						ORDER BY IDRESERVATIONTYPE DESC"
 					);
 		$result	=	$query->result();

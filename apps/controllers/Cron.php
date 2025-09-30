@@ -412,7 +412,8 @@ class Cron extends CI_controller {
 					'reservationType'		=>	$keyReservationType->RESERVATIONTYPE,
 					'titleKeywords'			=>	$titleKeywords,
 					'titleKeywordsExclution'=>	$titleKeywordsExclution,
-					'emailAddress'			=>	$emailAddress
+					'emailAddress'			=>	$emailAddress,
+					'isTransportIncluded'	=>	$keyReservationType->ISINCLUDETRANSPORT
 				];
 			}
 		}
@@ -1064,7 +1065,6 @@ class Cron extends CI_controller {
 			}
 		
 		} else {
-
 			$minusIdxNum		=	0;
 			if($resultSplit[11] == "Lead person email:"){
 				$minusIdxNum	=	1;
@@ -1087,8 +1087,10 @@ class Cron extends CI_controller {
 				$explodeParticipant	=	explode(" x ", $resultSplit[(17-$minusIdxNum)]);
 				$numberOfAdult		=	$explodeParticipant[0];
 			}
-
-			if(isset($resultSplit[(21-$minusIdxNum)]) && $resultSplit[(21-$minusIdxNum)] == "Pick Up From::"){
+			
+			if(isset($resultSplit[(21-$minusIdxNum)]) && $resultSplit[(21-$minusIdxNum)] == "Departure location:"){
+				$pickUpLocation	=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(22-$minusIdxNum)]);
+			} else if(isset($resultSplit[(21-$minusIdxNum)]) && $resultSplit[(21-$minusIdxNum)] == "Pick Up From::"){
 				$hotelName		=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(24-$minusIdxNum)]);
 			} else if(isset($resultSplit[(25-$minusIdxNum)]) && $resultSplit[(25-$minusIdxNum)] == "Location (Name and Address):") {
 				$pickUpLocation	=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(26-$minusIdxNum)]);
@@ -1096,6 +1098,9 @@ class Cron extends CI_controller {
 				$pickUpLocation	=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(24-$minusIdxNum)]);
 			} else if(isset($resultSplit[(29-$minusIdxNum)]) && $resultSplit[(29-$minusIdxNum)] == "Location (Name and Address):") {
 				$hotelName		=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(30-$minusIdxNum)]);
+			} else if(isset($resultSplit[(34-$minusIdxNum)]) && $resultSplit[(33-$minusIdxNum)] == "Location (Name and Address):") {
+				$pickUpLocation	=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(34-$minusIdxNum)]);
+				$hotelName		=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(34-$minusIdxNum)]);
 			} else {
 				if(isset($resultSplit[(22-$minusIdxNum)])){
 					$hotelName		=	preg_replace("/[^a-zA-Z0-9 ]+/", "", $resultSplit[(22-$minusIdxNum)]);
@@ -1935,28 +1940,34 @@ class Cron extends CI_controller {
 	}
 	
 	private function detectReservationType($arrToMailAddress, $reservationTitle){
+		$isTransportIncluded=	1;
 		$arrReservationType	=	$this->arrReservationType;
+
+		if(strpos(strtolower($reservationTitle), 'no transfer') !== false) $isTransportIncluded	=	0;
 		
 		foreach($arrReservationType as $keyReservationType){
-			$idReservationType		=	$keyReservationType['idReservationType'];
-			$reservationType		=	$keyReservationType['reservationType'];
-			$titleKeywords			=	$keyReservationType['titleKeywords'];
-			$titleKeywordsExclution	=	$keyReservationType['titleKeywordsExclution'];
-			$emailAddress			=	$keyReservationType['emailAddress'];
-			$isExclutionKeyword		=	false;
+			$idReservationType			=	$keyReservationType['idReservationType'];
+			$reservationType			=	$keyReservationType['reservationType'];
+			$titleKeywords				=	$keyReservationType['titleKeywords'];
+			$titleKeywordsExclution		=	$keyReservationType['titleKeywordsExclution'];
+			$emailAddress				=	$keyReservationType['emailAddress'];
+			$isTransportIncludedCheck	=	$keyReservationType['isTransportIncluded'];
+			$isExclutionKeyword			=	false;
 			
-			foreach($titleKeywordsExclution as $keywordExclution){
-				if(stripos($reservationTitle, strtolower($keywordExclution)) !== false) {
-					$isExclutionKeyword	=	true;
+			if($isTransportIncludedCheck == $isTransportIncluded){
+				foreach($titleKeywordsExclution as $keywordExclution){
+					if(stripos($reservationTitle, strtolower($keywordExclution)) !== false) {
+						$isExclutionKeyword	=	true;
+					}
 				}
-			}
 
-			foreach($arrToMailAddress as $toMailAddress){
-				if(in_array($toMailAddress, $emailAddress)) return $idReservationType;
-			}
+				foreach($arrToMailAddress as $toMailAddress){
+					if(in_array($toMailAddress, $emailAddress)) return $idReservationType;
+				}
 
-			foreach($titleKeywords as $keyword){
-				if(stripos($reservationTitle, strtolower($keyword)) !== false && !$isExclutionKeyword) return $idReservationType;
+				foreach($titleKeywords as $keyword){
+					if(stripos($reservationTitle, strtolower($keyword)) !== false && !$isExclutionKeyword) return $idReservationType;
+				}
 			}
 		}
 		
