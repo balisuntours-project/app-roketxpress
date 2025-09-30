@@ -471,6 +471,7 @@ $route['financeVendor/carRentalFeeCost/excelDetailCarRentalCost/(:any)/token']['
 $route['financeVendor/carRentalFeeCost/getDetailCarRentalCostById']['POST']						= 'FinanceVendor/CarRentalFeeCost/getDetailCarRentalCostById';
 $route['financeVendor/carRentalFeeCost/uploadCostReceipt']['POST']								= 'FinanceVendor/CarRentalFeeCost/uploadCostReceipt';
 $route['financeVendor/carRentalFeeCost/saveCarCost']['POST']									= 'FinanceVendor/CarRentalFeeCost/saveCarCost';
+$route['financeVendor/carRentalFeeCost/getDataCarRentalAdditionalCost']['POST']					= 'FinanceVendor/CarRentalFeeCost/getDataCarRentalAdditionalCost';
 
 $route['report/agentPaymentBalance/getDataStatsAgentPayment']['POST']							= 'Report/AgentPaymentBalance/getDataStatsAgentPayment';
 

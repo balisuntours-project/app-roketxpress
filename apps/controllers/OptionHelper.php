@@ -29,6 +29,7 @@ class OptionHelper extends CI_controller {
 		$dataProductTicket			=	$this->ModelOptionHelper->getDataOptionHelperProductTicket();
 		$dataDriverType				=	$this->ModelOptionHelper->getDataOptionHelperDriverType();
 		$dataDriver					=	$this->ModelOptionHelper->getDataOptionHelperDriver();
+		$dataDriverCarRental		=	$this->ModelOptionHelper->getDataOptionHelperDriverCarRental();
 		$dataDriverNewFinance		=	$this->ModelOptionHelper->getDataOptionHelperDriverNewFinanceScheme();
 		$dataDriverReview			=	$this->ModelOptionHelper->getDataOptionHelperDriverReview();
 		$dataCarType				=	$this->ModelOptionHelper->getDataOptionHelperCarType();
@@ -66,6 +67,7 @@ class OptionHelper extends CI_controller {
 			"dataProductTicket"			=> $dataProductTicket,
 			"dataDriverType"			=> $dataDriverType,
 			"dataDriver"				=> $dataDriver,
+			"dataDriverCarRental"		=> $dataDriverCarRental,
 			"dataDriverNewFinance"		=> $dataDriverNewFinance,
 			"dataCarType"				=> $dataCarType,
 			"dataCarCapacity"			=> $dataCarCapacity,

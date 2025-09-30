@@ -109,13 +109,15 @@ function activateTab(tableName, page = 1){
 																	"<td>"+btnEdit+btnDelete+"</td>"+
 																"</tr>";
 													break;
-						case "masterDriver"		:	var badgePartnership=	status	=	btnStatusUpdate = "",
-														nameFull		=	array.NAMEFULL == '' ? '-' : array.NAMEFULL,
-														scheduleType	=	array.SCHEDULETYPE == 1 ? "Auto" : "Manual",
-														btnAreaPriority	=	'<button class="button button-xs button-primary btn-block mt-5" onclick="setAreaPriority('+array.IDDATA+', \''+array.NAME+'\')">'+
-																				'<i class="fa fa-pencil"></i> Set Area Priority'+
-																			'</button>',
-														tempOTPData		=	levelUser == 1 ? "<br/><br/><b>Temporary OTP</b><br/>"+array.TEMPOTP : "";
+						case "masterDriver"		:	var badgePartnership	=	status	=	btnStatusUpdate =	"",
+														nameFull			=	array.NAMEFULL == '' ? '-' : array.NAMEFULL,
+														scheduleType		=	array.SCHEDULETYPE == 1 ? "Auto" : "Manual",
+														btnAreaPriority		=	'<button class="button button-xs button-primary btn-block mt-5" onclick="setAreaPriority('+array.IDDATA+', \''+array.NAME+'\')">'+
+																					'<i class="fa fa-pencil"></i> Set Area Priority'+
+																				'</button>',
+														tempOTPData			=	levelUser == 1 ? "<br/><br/><b>Temporary OTP</b><br/>"+array.TEMPOTP : "",
+														badgeCarRentalStatus=	array.CARRENTALDRIVERSTATUS == 1 ? '<br/><span class="badge badge-primary">Handle Car Rental</span>' : '';
+
 													switch(array.PARTNERSHIPTYPE){
 														case "1"	:	badgePartnership	=	'<span class="badge badge-success">Partner</span>';
 																		break;
@@ -147,7 +149,7 @@ function activateTab(tableName, page = 1){
 																		"<td>"+array.DRIVERTYPE+"<br/><b>Quota : </b>"+numberFormat(array.DRIVERQUOTA)+"</td>"+
 																		"<td>"+array.CARCAPACITYNAME+" ("+array.CAPACITYDETAIL+")<br/><br/>"+array.CARNUMBERPLATE+"<br/>"+array.CARBRAND+"<br/>"+array.CARMODEL+"</td>"+
 																		"<td>"+scheduleType+"</td>"+
-																		"<td>"+array.NAME+"<br/>"+nameFull+"<br/>"+array.ADDRESS+"<br/>"+array.PHONE+"<br/>"+array.EMAIL+"</td>"+
+																		"<td>" + array.NAME + "<br/>" + nameFull + "<br/>" + array.ADDRESS + "<br/>" + array.PHONE + "<br/>" + array.EMAIL + badgeCarRentalStatus + "</td>"+
 																		"<td>"+array.DRIVERAREA+"<br/>"+btnAreaPriority+"</td>"+
 																		"<td>"+array.LASTLOGIN+"<br/>"+array.LASTACTIVITY+tempOTPData+"</td>"+
 																		"<td>"+status+"</td>"+
@@ -251,7 +253,7 @@ function activateTab(tableName, page = 1){
 													}
 												}
 											});
-											$("#checkboxReviewBonusPunishment").prop('checked', false);
+											$("#checkboxHandleCarRental, #checkboxReviewBonusPunishment").prop('checked', false);
 											$("#containerSecretPINDriverStatus, #containerDriverNewFinanceScheme").addClass('d-none');
 											break;
 					case "masterVendor"	:	setOptionHelper('optionVendorType', 'dataVendorType');
@@ -718,6 +720,12 @@ function editorData(idData, tableName){
 												}
 											});
 											
+											if (response.data.CARRENTALDRIVERSTATUS == "1"){
+												$("#checkboxHandleCarRental").prop('checked', true);
+											} else {
+												$("#checkboxHandleCarRental").prop('checked', false);
+											}
+
 											if(response.data.REVIEWBONUSPUNISHMENT == "1"){
 												$("#checkboxReviewBonusPunishment").prop('checked', true);
 											} else {

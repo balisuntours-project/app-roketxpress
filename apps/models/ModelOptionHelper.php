@@ -164,6 +164,24 @@ class ModelOptionHelper extends CI_Model {
 	
 	}
 	
+	public function getDataOptionHelperDriverCarRental(){
+		
+		$baseQuery		=	sprintf("SELECT IDDRIVER AS ID, NAME AS VALUE, IDDRIVERTYPE AS PARENTVALUE
+									 FROM m_driver
+									 WHERE CARRENTALDRIVERSTATUS = 1
+									 ORDER BY IDDRIVERTYPE, NAME"
+									);
+		$query			=	$this->db->query($baseQuery);
+		$result			=	$query->result();
+		
+		if(!$result){
+			return array();
+		}
+		
+		return $result;
+	
+	}
+	
 	public function getDataOptionHelperDriverNewFinanceScheme(){
 		
 		$baseQuery		=	sprintf("SELECT IDDRIVER AS ID, NAME AS VALUE, IDDRIVERTYPE AS PARENTVALUE

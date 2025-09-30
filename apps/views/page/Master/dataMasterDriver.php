@@ -74,7 +74,11 @@
 					</div>
 				</div>
 				<div class="row mb-5">
-					<div class="form-group required col-sm-6">
+					<div class="form-group required col-lg-4 col-sm-12">
+						<label for="driverEmail" class="control-label">Email</label>
+						<input type="text" class="form-control" id="driverEmail" name="driverEmail" placeholder="Email" maxlength="50">
+					</div>
+					<div class="form-group required col-lg-4 col-sm-6">
 						<label for="phone" class="control-label">Phone Number</label>
 						<div class="input-group">
 							<div class="input-group-prepend">
@@ -83,18 +87,17 @@
 							<input type="text" class="form-control maskNumber nocomma" id="phone" name="phone" placeholder="Phone Number" onkeyup="maskNumberInput(8, false, 'phone')" aria-describedby="prefix-phone" maxlength="17">
 						</div>
 					</div>
-					<div class="form-group required col-sm-6">
-						<label for="driverEmail" class="control-label">Email</label>
-						<input type="text" class="form-control" id="driverEmail" name="driverEmail" placeholder="Email" maxlength="50">
-					</div>
-				</div>
-				<div class="row mb-5" style="border-bottom: 1px solid #e0e0e0;">
-					<div class="form-group required col-lg-5 col-sm-12">
+					<div class="form-group required col-lg-4 col-sm-6">
 						<label for="password" class="control-label">Password</label>
 						<input type="text" class="form-control" id="password" name="password" placeholder="" autocomplete="off" maxlength="50">
 					</div>
-					<div class="form-group col-lg-7 col-sm-12">
-						<label class="adomx-checkbox mt-30"><input type="checkbox" name="checkboxReviewBonusPunishment" id="checkboxReviewBonusPunishment" value="1"> <i class="icon"></i> Include review bonus & punishment</label>
+				</div>
+				<div class="row mb-5" style="border-bottom: 1px solid #e0e0e0;">
+					<div class="form-group col-lg-6 col-sm-12">
+						<label class="adomx-checkbox mt-10"><input type="checkbox" name="checkboxHandleCarRental" id="checkboxHandleCarRental" value="1"> <i class="icon"></i> Handle Car Rental Drop Off & Pick Up</label>
+					</div>
+					<div class="form-group col-lg-6 col-sm-12">
+						<label class="adomx-checkbox mt-10"><input type="checkbox" name="checkboxReviewBonusPunishment" id="checkboxReviewBonusPunishment" value="1"> <i class="icon"></i> Include review bonus & punishment</label>
 					</div>
 				</div>
 				<div class="row pt-10 mb-5" style="border-bottom: 1px solid #e0e0e0;">

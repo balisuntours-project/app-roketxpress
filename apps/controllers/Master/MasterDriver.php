@@ -46,6 +46,7 @@ class MasterDriver extends CI_controller {
 		$driverQuota			=	removeNonNumericValue(validatePostVar($this->postVar, 'driverQuota', true));
 		$phone					=	numberValidator(removeNonNumericValue(validatePostVar($this->postVar, 'phone', false)));
 		$driverEmail			=	validatePostVar($this->postVar, 'driverEmail', true);
+		$carRentalDriverStatus	=	validatePostVar($this->postVar, 'checkboxHandleCarRental', false);
 		$reviewBonusPunishment	=	validatePostVar($this->postVar, 'checkboxReviewBonusPunishment', false);
 		$password				=	validatePostVar($this->postVar, 'password', true);
 		$passwordMd5			=	md5($password);
@@ -78,6 +79,7 @@ class MasterDriver extends CI_controller {
 			"CARMODEL"				=>	$carModel,
 			"PASSWORD"				=>	$passwordMd5,
 			"PASSWORDPLAIN"			=>	$password,
+			"CARRENTALDRIVERSTATUS"	=>	$carRentalDriverStatus,
 			"REVIEWBONUSPUNISHMENT"	=>	$reviewBonusPunishment,
 			"NEWFINANCESCHEME"		=>	1,
 			"NEWFINANCESCHEMESTART"	=>	date('Y-m-d H:i:s'),
@@ -173,6 +175,7 @@ class MasterDriver extends CI_controller {
 		$driverQuota			=	removeNonNumericValue(validatePostVar($this->postVar, 'driverQuota', true));
 		$phone					=	numberValidator(removeNonNumericValue(validatePostVar($this->postVar, 'phone', false)));
 		$driverEmail			=	validatePostVar($this->postVar, 'driverEmail', true);
+		$carRentalDriverStatus	=	validatePostVar($this->postVar, 'checkboxHandleCarRental', false);
 		$reviewBonusPunishment	=	validatePostVar($this->postVar, 'checkboxReviewBonusPunishment', false);
 		$password				=	validatePostVar($this->postVar, 'password', true);
 		$passwordMd5			=	md5($password);
@@ -205,6 +208,7 @@ class MasterDriver extends CI_controller {
 			"CARMODEL"				=>	$carModel,
 			"PASSWORD"				=>	$passwordMd5,
 			"PASSWORDPLAIN"			=>	$password,
+			"CARRENTALDRIVERSTATUS"	=>	$carRentalDriverStatus,
 			"REVIEWBONUSPUNISHMENT"	=>	$reviewBonusPunishment
 	   );
 
