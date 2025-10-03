@@ -1041,15 +1041,15 @@ class DetailReservationPayment extends CI_controller {
 					if($idSource == 1){
 						try{
 							$bookingCode	=	$data[0];
-							$numberOfUnit	=	$formatAutoPayment == 3 ? $data[18] : $data[23];
+							$numberOfUnit	=	$formatAutoPayment == 3 ? $data[24] : $data[18];
 							$numberOfUnit	=	is_numeric($numberOfUnit) ? $numberOfUnit * 1 : 0;
-							$amountUnit		=	$formatAutoPayment == 3 ? $data[15] : $data[20];
+							$amountUnit		=	$formatAutoPayment == 3 ? $data[21] : $data[15];
 							$amountUnit		=	is_numeric($amountUnit) ? $amountUnit * 1 : 0;
 							$amount			=	$numberOfUnit * $amountUnit;
-							$amountDiscount	=	$formatAutoPayment == 3 ? $data[21] : $data[24];
+							$amountDiscount	=	$formatAutoPayment == 3 ? $data[25] : $data[21];
 							$amountDiscount	=	is_numeric($amountDiscount) ? $amountDiscount * 1 : 0;
 							$amountOrigin	=	$amount - $amountDiscount;
-							$discountNotes	=	$formatAutoPayment == 3 ? $data[22] : $data[25];
+							$discountNotes	=	$formatAutoPayment == 3 ? $data[26] : $data[22];
 							
 							if(strlen($bookingCode) == 9 && ctype_alpha(substr($bookingCode, 0, 3)) && preg_match("/^\d+$/", substr($bookingCode, 3, 6))){
 								$isValidCode		=	true;
