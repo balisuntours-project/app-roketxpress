@@ -1045,10 +1045,10 @@ class DetailReservationPayment extends CI_controller {
 							$numberOfUnit	=	is_numeric($numberOfUnit) ? $numberOfUnit * 1 : 0;
 							$amountUnit		=	$formatAutoPayment == 3 ? $data[21] : $data[15];
 							$amountUnit		=	is_numeric($amountUnit) ? $amountUnit * 1 : 0;
-							$amount			=	$numberOfUnit * $amountUnit;
-							$amountDiscount	=	$formatAutoPayment == 3 ? $data[25] : $data[21];
+							$amount			=	intval($numberOfUnit * $amountUnit);
+							$amountDiscount	=	$formatAutoPayment == 3 ? $data[25] : 0;
 							$amountDiscount	=	is_numeric($amountDiscount) ? $amountDiscount * 1 : 0;
-							$amountOrigin	=	$amount - $amountDiscount;
+							$amountOrigin	=	intval($amount - $amountDiscount);
 							$discountNotes	=	$formatAutoPayment == 3 ? $data[26] : $data[22];
 							
 							if(strlen($bookingCode) == 9 && ctype_alpha(substr($bookingCode, 0, 3)) && preg_match("/^\d+$/", substr($bookingCode, 3, 6))){
