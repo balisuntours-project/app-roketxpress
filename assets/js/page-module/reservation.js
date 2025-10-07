@@ -522,28 +522,38 @@ $('#modal-editorReservation').on('show.bs.modal', function(event) {
 
 	if ($activeElement.is('[data-toggle]')) {
 		if (event.type === 'show') {
-			if($activeElement.attr('data-action') == "insert"){
-				$("#optionReservationTypeEditor, #optionSourceEditor").val("");
-				$("#reservationDate").val(dateNow);
-				$("#reservationTitle, #productDetailsUrl, #customerName, #customerContact, #customerEmail, #hotelName, #pickUpLocation, #pickUpLocationUrl, #dropOffLocation, #bookingCode, #tourPlan, #remark, #specialRequest").val("");
-				$("#numberOfChild, #numberOfInfant, #reservationPriceInteger, #reservationPriceDecimal, #idReservationEditor, #reservationPriceIDR").val(0);
-				$("#durationOfDay, #numberOfAdult").val(1);
-				$("#optionPickUpArea").val($("#optionPickUpArea option:first").val());
-				$("#reservationHour").val($("#reservationHour option:first").val());
-				$("#reservationMinute").val($("#reservationMinute option:first").val());
-				$("#reservationPriceType").val($("#reservationPriceType option:first").val());
-				$("#bookingCode").val(localStorage.getItem("bookingCodeManual"));
-				$("#selfDriveStatus").val("");
+			let bookingCodeManual	=	localStorage.getItem("bookingCodeManual");
+			
+			if (bookingCodeManual !== null && bookingCodeManual !== undefined && bookingCodeManual != ""){
+				if($activeElement.attr('data-action') == "insert"){
+					$("#optionReservationTypeEditor, #optionSourceEditor").val("");
+					$("#reservationDate").val(dateNow);
+					$("#reservationTitle, #productDetailsUrl, #customerName, #customerContact, #customerEmail, #hotelName, #pickUpLocation, #pickUpLocationUrl, #dropOffLocation, #bookingCode, #tourPlan, #remark, #specialRequest").val("");
+					$("#numberOfChild, #numberOfInfant, #reservationPriceInteger, #reservationPriceDecimal, #idReservationEditor, #reservationPriceIDR").val(0);
+					$("#durationOfDay, #numberOfAdult").val(1);
+					$("#optionPickUpArea").val($("#optionPickUpArea option:first").val());
+					$("#reservationHour").val($("#reservationHour option:first").val());
+					$("#reservationMinute").val($("#reservationMinute option:first").val());
+					$("#reservationPriceType").val($("#reservationPriceType option:first").val());
+					$("#bookingCode").val(localStorage.getItem("bookingCodeManual"));
+					$("#selfDriveStatus").val("");
 
-				var currencyType	=	$("#reservationPriceType option:first").val(),
-					currExchangeData=	JSON.parse(localStorage.getItem("currExchangeData"));
-				
-				$.each(currExchangeData, function(index, array) {
-					if(array.CURRENCY == currencyType){
-						$("#currencyExchange").val(numberFormat(array.EXCHANGETOIDR));
-					}
+					var currencyType	=	$("#reservationPriceType option:first").val(),
+						currExchangeData=	JSON.parse(localStorage.getItem("currExchangeData"));
+					
+					$.each(currExchangeData, function(index, array) {
+						if(array.CURRENCY == currencyType){
+							$("#currencyExchange").val(numberFormat(array.EXCHANGETOIDR));
+						}
+					});
+					setDateTimeEndDisableStatus();
+				}
+			} else {
+				$('#modalWarning').on('show.bs.modal', function() {
+					$('#modalWarningBody').html("Failed to get new booking code. Please try to re-open this menu");
 				});
-				setDateTimeEndDisableStatus();
+				$('#modalWarning').modal('show');
+				$('#modal-editorReservation').modal('hide');
 			}
 		}
 	}
