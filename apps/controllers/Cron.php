@@ -1601,37 +1601,36 @@ class Cron extends CI_controller {
 				}
 			}
 			
-			$tablePkg		= 	$this->dom->getElementsByTagName('table')->item(2);	
-			$dataPkg		=	$tablePkg->nodeValue;
-			$dataSplitPkg	=	preg_split('/\r\n|\r|\n/', $dataPkg);
+			$tablePkg			= 	$this->dom->getElementsByTagName('table')->item(2);
+			$childRowsTablePkg	=	$tablePkg->getElementsByTagName('tr');
 
-			foreach($dataSplitPkg as $keyDataPkg){
-				$plainStringPkg	=	trim(preg_replace('/\s+/', ' ', $keyDataPkg));
-				if($plainStringPkg != ""){
-					$explodeStringPkg	=	explode(": ", $plainStringPkg);
-					$keyStringPkg		=	$explodeStringPkg[0];
-					$valueStringPkg		=	isset($explodeStringPkg[1]) && $explodeStringPkg[1] != '' ? $explodeStringPkg[1] : '';
-					
-					switch($keyStringPkg){
-						case "Package"					:	$reservationTitle	=	$valueStringPkg;
-															if (preg_match('/(\d+)\s*Pax/', $valueStringPkg, $matches)) $numberOfAdult = $matches[1];
-															break;
-						case "Date of Tour-Activity"	:	try {
-																$dateReservation=	DateTime::createFromFormat("D d M Y", $valueStringPkg);
-																
-																if ($dateReservation) $reservationDate	=	$dateReservation->format("Y-m-d");
-															} catch (Exception $e) {}
-															break;
-						case "Pickup location"			:	$pickUpLocation	=	$valueStringPkg; break;
-						case "Pickup time"				:	try {
-																$timeReservation=	DateTime::createFromFormat("h:i A", $valueStringPkg);
-																
-																if ($timeReservation) $reservationTime	=	$timeReservation->format("H:i");
-															} catch (Exception $e) {}
-															break;
-						case "Planned place to visit"	:	$tourPlan	=	$valueStringPkg; break;
-						case "Note"						:	$remark		=	$valueStringPkg; break;
-					}
+			foreach($childRowsTablePkg as $childRowTablePkg){
+				$colsTablePkg		=	$childRowTablePkg->getElementsByTagName('td');
+				$colsTablePkgText	=	$colsTablePkg[0]->textContent;
+				$explodeStringPkg	=	explode(": ", $colsTablePkgText);
+				$keyStringPkg		=	trim($explodeStringPkg[0]);
+				array_shift($explodeStringPkg);
+				$valueStringPkg		=	implode(': ', array_map('trim', $explodeStringPkg));
+				
+				switch($keyStringPkg){
+					case "Package"					:	$reservationTitle	=	$valueStringPkg;
+														if (preg_match('/(\d+)\s*Pax/', $valueStringPkg, $matches)) $numberOfAdult = $matches[1];
+														break;
+					case "Date of Tour-Activity"	:	try {
+															$dateReservation=	DateTime::createFromFormat("D d M Y", $valueStringPkg);
+															
+															if ($dateReservation) $reservationDate	=	$dateReservation->format("Y-m-d");
+														} catch (Exception $e) {}
+														break;
+					case "Pickup location"			:	$pickUpLocation	=	$valueStringPkg; break;
+					case "Pickup time"				:	try {
+															$timeReservation=	DateTime::createFromFormat("h:i A", $valueStringPkg);
+															
+															if ($timeReservation) $reservationTime	=	$timeReservation->format("H:i");
+														} catch (Exception $e) {}
+														break;
+					case "Planned place to visit"	:	$tourPlan	=	$valueStringPkg; break;
+					case "Note"						:	$remark		=	$valueStringPkg; break;
 				}
 			}
 		}
@@ -3100,7 +3099,7 @@ class Cron extends CI_controller {
 				}
 
 				$colsReview		=	$rowReview->getElementsByTagName('td')->item(1);
-				$tableReview	=	$colsReview->getElementsByTagName('table')->item(0);				
+				$tableReview	=	$colsReview->getElementsByTagName('table')->item(0);
 				$childRowsReview=	$tableReview->getElementsByTagName('tr');
 				
 				foreach($childRowsReview as $childRowReview){
@@ -3133,8 +3132,8 @@ class Cron extends CI_controller {
 					try {
 						$curl			=	curl_init();
 						$timeStamp		=	time();
-						$dataJSON       =   json_encode(['booking_code'=>$bookingCode, 'timestamp'=>$timeStamp]);
-						$privateKey     =   ROKET_ECOMMERCE_PRIVATE_KEY;
+						$dataJSON       =   json_encode(['timestamp'=>$timeStamp]);
+						$privateKey     =   ROKET_CS_AI_AGENT_PRIVATE_KEY;
 						$hmacSignature  =   hash_hmac('sha256', $dataJSON, $privateKey);
 						$isDriverOwnCar	=	$this->ModelCron->isDriverHandleOwnCarByBookingCode($bookingCode);
 						$arrPostData	=	[
@@ -3147,7 +3146,7 @@ class Cron extends CI_controller {
 						
 						curl_setopt_array($curl,
 							array(
-								CURLOPT_URL				=>	ROKET_ECOMMERCE_API_BASE_URL.'/api/customer/coin/earn-from-booking?booking_code='.$bookingCode,
+								CURLOPT_URL				=>	ROKET_CS_AI_AGENT_BAD_REVIEW_ANALYZE_URL,
 								CURLOPT_RETURNTRANSFER	=>	true,
 								CURLOPT_ENCODING		=>	'',
 								CURLOPT_MAXREDIRS		=>	10,
@@ -3157,23 +3156,30 @@ class Cron extends CI_controller {
 								CURLOPT_CUSTOMREQUEST	=>	'POST',
 								CURLOPT_POSTFIELDS      =>  http_build_query($arrPostData),
 								CURLOPT_HTTPHEADER		=>	array(
-									'BST-Public-Key: '.ROKET_ECOMMERCE_PUBLIC_KEY,
+									'BST-Public-Key: '.ROKET_CS_AI_AGENT_PUBLIC_KEY,
 									'BST-Signature: '.$hmacSignature,
 									'BST-Timestamp: '.$timeStamp
 								)
 							)
 						);
 
-						// $response	=	curl_exec($curl);
-						// $httpCode	=	curl_getinfo($curl, CURLINFO_HTTP_CODE);
-						// curl_close($curl);
+						$response	=	curl_exec($curl);
+						$httpCode	=	curl_getinfo($curl, CURLINFO_HTTP_CODE);
+						curl_close($curl);
+
+						if($httpCode == 200){
+							$responseDecode	=	json_decode($response, true);
+							
+						}
+
+						echo "URL: ".ROKET_CS_AI_AGENT_BAD_REVIEW_ANALYZE_URL."<br/>";
+						echo "Response: ".json_encode($response)."<br/>";
+						echo "HTTP Code: ".$httpCode."<br/>";
 					} catch (Exception $e) {
 						log_message('error', 'readKlookBadReviewMail -> error :: '.json_encode($e));
 					}
 				}
 			}
-			
-			die();
 		}
 		
 		echo "End read bad review klook - ".date("d M Y H:i");
