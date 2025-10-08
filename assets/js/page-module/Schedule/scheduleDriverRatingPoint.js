@@ -5,7 +5,7 @@ if (driverRatingPointFunc == null){
 	var driverRatingPointFunc	=	function(){
 		$(document).ready(function () {
 			getDataTable();
-			setOptionHelper('optionSource', 'dataSource');
+			setOptionHelper('optionSource', 'dataSourceAutoRating');
 			setOptionHelper('optionSourceInputAuto', 'dataSourceAutoRating');
 			setOptionHelper('optionSourceRatingCalendar', 'dataSourceAutoRating');
 
@@ -358,7 +358,6 @@ function getDataInputRating(){
 }
 
 function addNewDriverRatingPoint(idDriver, driverType, driverName, dateRatingStr, lastInputData){
-	
 	var splitLastInputData	=	lastInputData.split('|'),
 		detailLastInput		=	splitLastInputData[1]+' ['+splitLastInputData[0]+']<br/>'+'<i class="fa fa-star text-success"></i> '+splitLastInputData[2]+' - '+splitLastInputData[3]+' Points';
 	
@@ -367,6 +366,7 @@ function addNewDriverRatingPoint(idDriver, driverType, driverName, dateRatingStr
 	$("#lastRatingPoint").html(detailLastInput);
 	$("#pointInput").html("0");
 	$("#ratingInputHidden").val("0");
+	$("#reviewTitle, #reviewContent").val("");
 	$("#idDriver").val(idDriver);
 	
 	if($('#ratingInput').length) {
@@ -392,19 +392,27 @@ function addNewDriverRatingPoint(idDriver, driverType, driverName, dateRatingStr
 	});
 	
 	$("#editor-modal-driverRatingPoint").modal("show");
-	
 }
 
 $('#editor-driverRatingPoint').off('submit');
 $('#editor-driverRatingPoint').on('submit', function(e) {
-	
 	e.preventDefault();
-	var idDriver	=	$("#idDriver").val(),
-		idSource	=	$("#optionSource").val(),
-		dateRating	=	$("#dateRating").val(),
-		rating		=	$("#ratingInputHidden").val(),
-		point		=	$("#pointInput").html(),
-		dataSend	=	{idDriver:idDriver, idSource:idSource, dateRating:dateRating, rating:rating, point:point};
+	var idDriver		=	$("#idDriver").val(),
+		idSource		=	$("#optionSource").val(),
+		dateRating		=	$("#dateRating").val(),
+		rating			=	$("#ratingInputHidden").val(),
+		point			=	$("#pointInput").html(),
+		reviewTitle		=	$("#reviewTitle").val(),
+		reviewContent	=	$("#reviewContent").val(),
+		dataSend		=	{
+			idDriver:idDriver,
+			idSource:idSource,
+			dateRating:dateRating,
+			rating:rating,
+			point:point,
+			reviewTitle:reviewTitle,
+			reviewContent:reviewContent
+		};
 		
 	$.ajax({
 		type: 'POST',
@@ -434,10 +442,8 @@ $('#editor-driverRatingPoint').on('submit', function(e) {
 				generateDataTable();
 				$("#editor-modal-driverRatingPoint").modal("hide");
 			}
-			
 		}
 	});
-	
 });
 
 function deleteDriverRatingPoint(idDriverRatingPoint, driverType, driverName, dateRating, sourceName, rating, date){

@@ -79,47 +79,42 @@ class DriverRatingPoint extends CI_controller {
 	
 	}
 	
-	public function saveDataDriverRatingPoint(){
-		
+	public function saveDataDriverRatingPoint(){		
 		$this->load->model('MainOperation');
 		$this->load->model('Schedule/ModelDriverRatingPoint');
 		
-		$userInput	=	validatePostVar($this->postVar, 'NAME', false);
-		$idDriver	=	validatePostVar($this->postVar, 'idDriver', true);
-		$idSource	=	validatePostVar($this->postVar, 'idSource', true);
-		$rating		=	validatePostVar($this->postVar, 'rating', true);
-		$point		=	validatePostVar($this->postVar, 'point', true);
-		$dateRating	=	validatePostVar($this->postVar, 'dateRating', true);
-		$dateRating	=	DateTime::createFromFormat('d-m-Y', $dateRating);
-		$dateRating	=	$dateRating->format('Y-m-d');
+		$userInput		=	validatePostVar($this->postVar, 'NAME', false);
+		$idDriver		=	validatePostVar($this->postVar, 'idDriver', true);
+		$idSource		=	validatePostVar($this->postVar, 'idSource', true);
+		$rating			=	validatePostVar($this->postVar, 'rating', true);
+		$reviewTitle	=	validatePostVar($this->postVar, 'reviewTitle', false);
+		$reviewContent	=	validatePostVar($this->postVar, 'reviewContent', false);
+		$point			=	$rating == 5 ? $this->ModelDriverRatingPoint->getPointForRating5Source($idSource) : validatePostVar($this->postVar, 'point', true);
+		$dateRating		=	validatePostVar($this->postVar, 'dateRating', true);
+		$dateRating		=	DateTime::createFromFormat('d-m-Y', $dateRating);
+		$dateRating		=	$dateRating->format('Y-m-d');
 		
-		if($dateRating < $this->subtract30Days){
-			setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Maximum period of rating input is <b>30 days</b> ago"));
-		}
-		
-		if($dateRating > date('Y-m-d')){
-			setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Cannot input data beyond today's date"));
-		}
+		if($dateRating < $this->subtract30Days) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Maximum period of rating input is <b>30 days</b> ago"));
+		if($dateRating > date('Y-m-d')) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Cannot input data beyond today's date"));
 		
 		$arrInsert	=	array(
-							"IDDRIVER"			=>	$idDriver,
-							"IDSOURCE"			=>	$idSource,
-							"DATERATINGPOINT"	=>	$dateRating,
-							"RATING"			=>	$rating,
-							"POINT"				=>	$point,
-							"USERINPUT"			=>	$userInput,
-							"DATETIMEINPUT"		=>	date('Y-m-d H:i:s')
-						);
+			"IDDRIVER"			=>	$idDriver,
+			"IDSOURCE"			=>	$idSource,
+			"DATERATINGPOINT"	=>	$dateRating,
+			"RATING"			=>	$rating,
+			"POINT"				=>	$point,
+			"REVIEWTITLE"		=>	$reviewTitle,
+			"REVIEWCONTENT"		=>	$reviewContent,
+			"USERINPUT"			=>	$userInput,
+			"DATETIMEINPUT"		=>	date('Y-m-d H:i:s')
+		);
 		$procInsert	=	$this->MainOperation->addData("t_driverratingpoint", $arrInsert);
 
-		if(!$procInsert['status']){
-			switchMySQLErrorCode($procInsert['errCode'], $this->newToken);
-		}
+		if(!$procInsert['status']) switchMySQLErrorCode($procInsert['errCode'], $this->newToken);
 		
 		$this->setPointRankDriver();
 		$this->calculateBonusPunishmentReview();
 		setResponseOk(array("token"=>$this->newToken, "msg"=>"New driver rating & point data saved"));
-	
 	}
 	
 	public function saveDataSettingRatingPoint(){
@@ -461,7 +456,7 @@ class DriverRatingPoint extends CI_controller {
 					$this->calculateBonusPunishmentReview($idDriverReviewBonusPeriod, $deleteByIdDriver);
 				}
 			} else {
-				$this->calculateBonusPunishmentReview($idDriverReviewBonusPeriod, $deleteByIdDriver);
+				$this->calculateBonusPunishmentReview(false, $deleteByIdDriver);
 			}
 			setResponseOk(array("token"=>$this->newToken, "msg"=>"Done proccess for calculate bonus punishment review"));
 		} catch(Exception $e) {

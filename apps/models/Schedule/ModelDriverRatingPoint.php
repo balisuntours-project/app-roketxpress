@@ -104,6 +104,17 @@ class ModelDriverRatingPoint extends CI_Model {
 		return $result;
 		
 	}
+
+	public function getPointForRating5Source($idSource){
+		$baseQuery	=	"SELECT REVIEW5STARPOINT FROM m_source
+						WHERE IDSOURCE = ".$idSource."
+						LIMIT 1";
+		$query		=	$this->db->query($baseQuery);
+		$row		=	$query->row_array();
+		
+		if(!$row) return 1;
+		return $row['REVIEW5STARPOINT'];
+	}
 	
 	public function getDataPointDriver($dateStart){
 		
@@ -126,25 +137,6 @@ class ModelDriverRatingPoint extends CI_Model {
 	public function getDataDriverByBookingCode($bookingCode){
 		
 		$baseQuery	=	"SELECT A.IDDRIVER, D.NAME AS DRIVERNAME, C.RESERVATIONTITLE FROM t_scheduledriver A
-						LEFT JOIN t_reservationdetails B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
-						LEFT JOIN t_reservation C ON B.IDRESERVATION = C.IDRESERVATION
-						LEFT JOIN m_driver D ON A.IDDRIVER = D.IDDRIVER
-						WHERE C.BOOKINGCODE = '".$bookingCode."'
-						ORDER BY DRIVERNAME";
-		$query		=	$this->db->query($baseQuery);
-		$result		=	$query->result();
-		
-		if(!$result){
-			return false;
-		}
-		
-		return $result;
-		
-	}
-	
-	public function getPointByRating($rating){
-		
-		$baseQuery	=	"SELECT A.IDDRIVER, D.NAME AS DRIVERNAME FROM t_scheduledriver A
 						LEFT JOIN t_reservationdetails B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
 						LEFT JOIN t_reservation C ON B.IDRESERVATION = C.IDRESERVATION
 						LEFT JOIN m_driver D ON A.IDDRIVER = D.IDDRIVER

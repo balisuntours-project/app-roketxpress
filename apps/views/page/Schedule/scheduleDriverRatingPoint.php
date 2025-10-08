@@ -181,7 +181,7 @@
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
 			</div>
 			<div class="modal-body">
-				<div class="row" style="border-bottom: 1px solid #e0e0e0;">
+				<div class="row border-bottom">
 					<div class="col-sm-12 mb-10">
 						<div class="order-details-customer-info">
 							<ul class="ml-10 px-1">
@@ -206,6 +206,18 @@
 					<div class="col-sm-6 mb-10">
 						<label for="pointInput" class="control-label mb-10">Point</label>
 						<b id="pointInput">0</b>
+					</div>
+				</div>
+				<div class="row form-group">
+					<div class="col-sm-12 mb-10">
+						<label for="reviewTitle" class="control-label">Review Title</label>
+						<input type="text" class="form-control" id="reviewTitle" name="reviewTitle" placeholder="Review Title">
+					</div>
+				</div>
+				<div class="row form-group mb-0">
+					<div class="col-sm-12 mb-10">
+						<label for="reviewContent" class="control-label">Review Content</label>
+						<textarea class="form-control" placeholder="Review Content" id="reviewContent" name="reviewContent"></textarea>
 					</div>
 				</div>
 			</div>

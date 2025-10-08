@@ -314,7 +314,7 @@ class ModelOptionHelper extends CI_Model {
 		
 		$baseQuery		=	sprintf("SELECT IDSOURCE AS ID, SOURCENAME AS VALUE
 									 FROM m_source
-									 WHERE STATUS = 1 AND AUTOINPUTRATING = 1
+									 WHERE AUTOINPUTRATING = 1
 									 ORDER BY SOURCENAME"
 									);
 		$query			=	$this->db->query($baseQuery);
