@@ -280,6 +280,8 @@ function generateDataTable(page){
 function getDataReservation(page = 1, idReservation = 0){
 	var $tableBody			=	$('#table-reservation > tbody'),
 		columnNumber		=	$('#table-reservation > thead > tr > th').length,
+		arrElemDisabled		=	['reservationFilter', '#btnCreateVoucher', '#btnCreateReservation', '#optionOrderBy', '#optionOrderType'],
+		elFilterPropertyData=	getElementPropertyDataInContainer(arrElemDisabled),
 		status				=	$('#optionReservationStatus').val(),
 		year				=	$('#optionYear').val(),
 		idReservationType	=	$('#optionReservationType').val(),
@@ -324,11 +326,13 @@ function getDataReservation(page = 1, idReservation = 0){
 		data: mergeDataSend(dataSend),
 		beforeSend:function(){
 			NProgress.set(0.4);
+			setDisabledPropertyElement(arrElemDisabled);
 			$tableBody.html("<tr><td colspan='"+columnNumber+"'><center><i class='fa fa-spinner fa-pulse'></i><br/>Loading data...</center></td></tr>");
 		},
 		success:function(response){
 			NProgress.done();
 			setUserToken(response);
+			resetDisabledPropertyElem(elFilterPropertyData);
 			
 			localStorage.setItem('bookingCodeManual', response.bookingCodeManual);			
 			if(response.status != 200){
@@ -549,11 +553,11 @@ $('#modal-editorReservation').on('show.bs.modal', function(event) {
 					setDateTimeEndDisableStatus();
 				}
 			} else {
+				event.preventDefault();
 				$('#modalWarning').on('show.bs.modal', function() {
 					$('#modalWarningBody').html("Failed to get new booking code. Please try to re-open this menu");
 				});
 				$('#modalWarning').modal('show');
-				$('#modal-editorReservation').modal('hide');
 			}
 		}
 	}

@@ -15,7 +15,7 @@
 	</div>
 </div>
 <div class="slideTransition slideContainer slideLeft show" id="slideContainerLeft">
-	<div class="box">
+	<div class="box" id="reservationFilter">
 		<div class="box-body">
 			<div class="row">
 				<div class="col-lg-2 col-sm-12">

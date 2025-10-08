@@ -1373,3 +1373,49 @@ function onChangeDateInputFilter(elementObj){
 		}
 	});
 }
+
+function getElementPropertyDataInContainer(arrElemDisabled) {
+	let elementPropertyData	=	[];
+
+	$.each(arrElemDisabled, function (index, elementId) {
+		if (elementId[0] !== '#') {
+			$('#' + elementId).find(':input[id]').map(function () {
+				elementPropertyData.push({
+					id: this.id,
+					disabled: $(this).prop('disabled') || false,
+					value: $(this).val()
+				});
+			}).get();
+		} else {
+			elementPropertyData.push({
+				id: elementId.replace('#', ''),
+				disabled: $(elementId).prop('disabled') || false,
+				value: $(elementId).val()
+			});
+		}
+	});
+
+	return elementPropertyData;
+}
+
+function setDisabledPropertyElement(arrElemDisabled) {
+	$.each(arrElemDisabled, function (index, elementId) {
+		if (elementId[0] !== '#') {
+			if ($('#' + elementId).length) {
+				$('#' + elementId).find(':input').prop('disabled', true);
+			}
+		} else {
+			$(elementId).prop('disabled', true);
+		}
+	});
+}
+
+function resetDisabledPropertyElem(elemFilterPropertyData) {
+	elemFilterPropertyData.forEach(function (item) {
+		const $element = $('#' + item.id);
+
+		if ($element.length) {
+			$element.prop('disabled', item.disabled);
+		}
+	});
+}

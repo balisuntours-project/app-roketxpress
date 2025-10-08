@@ -1730,14 +1730,10 @@ class Reservation extends CI_controller {
 		if(!$deleteResult['status']){
 			if(!$arrDataDeleteReservationDetails) switchMySQLErrorCode($deleteResult['errCode'], $this->newToken);
 			if($arrDataDeleteReservationDetails) {
-				if($isAPI){
-					return [
-						"isSuccess"	=>	false,
-						"msg"		=>	"Database internal process error"
-					];
-				} else {
-					return false;
-				}
+				return [
+					"isSuccess"	=>	false,
+					"msg"		=>	"Database internal process error"
+				];
 			}
 		}
 		
