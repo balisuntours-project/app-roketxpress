@@ -280,7 +280,7 @@ function generateDataTable(page){
 function getDataReservation(page = 1, idReservation = 0){
 	var $tableBody			=	$('#table-reservation > tbody'),
 		columnNumber		=	$('#table-reservation > thead > tr > th').length,
-		arrElemDisabled		=	['reservationFilter', '#btnCreateVoucher', '#btnCreateReservation', '#optionOrderBy', '#optionOrderType'],
+		arrElemDisabled		=	['reservationFilter', '#btnCreateVoucher', '#btnCreateReservation', '#filterDataReservation', '#optionOrderBy', '#optionOrderType'],
 		elFilterPropertyData=	getElementPropertyDataInContainer(arrElemDisabled),
 		status				=	$('#optionReservationStatus').val(),
 		year				=	$('#optionYear').val(),
@@ -522,44 +522,31 @@ function getDataReservation(page = 1, idReservation = 0){
 
 $('#modal-editorReservation').off('show.bs.modal');
 $('#modal-editorReservation').on('show.bs.modal', function(event) {
-	var $activeElement = $(document.activeElement);
+	let elemIdTrigger		=	$(event.relatedTarget).attr('id'),
+		bookingCodeManual	=	localStorage.getItem("bookingCodeManual");
 
-	if ($activeElement.is('[data-toggle]')) {
-		if (event.type === 'show') {
-			let bookingCodeManual	=	localStorage.getItem("bookingCodeManual");
-			
-			if (bookingCodeManual !== null && bookingCodeManual !== undefined && bookingCodeManual != ""){
-				if($activeElement.attr('data-action') == "insert"){
-					$("#optionReservationTypeEditor, #optionSourceEditor").val("");
-					$("#reservationDate").val(dateNow);
-					$("#reservationTitle, #productDetailsUrl, #customerName, #customerContact, #customerEmail, #hotelName, #pickUpLocation, #pickUpLocationUrl, #dropOffLocation, #bookingCode, #tourPlan, #remark, #specialRequest").val("");
-					$("#numberOfChild, #numberOfInfant, #reservationPriceInteger, #reservationPriceDecimal, #idReservationEditor, #reservationPriceIDR").val(0);
-					$("#durationOfDay, #numberOfAdult").val(1);
-					$("#optionPickUpArea").val($("#optionPickUpArea option:first").val());
-					$("#reservationHour").val($("#reservationHour option:first").val());
-					$("#reservationMinute").val($("#reservationMinute option:first").val());
-					$("#reservationPriceType").val($("#reservationPriceType option:first").val());
-					$("#bookingCode").val(localStorage.getItem("bookingCodeManual"));
-					$("#selfDriveStatus").val("");
+	if (elemIdTrigger == 'btnCreateReservation') {
+		$("#optionReservationTypeEditor, #optionSourceEditor").val("");
+		$("#reservationDate").val(dateNow);
+		$("#reservationTitle, #productDetailsUrl, #customerName, #customerContact, #customerEmail, #hotelName, #pickUpLocation, #pickUpLocationUrl, #dropOffLocation, #bookingCode, #tourPlan, #remark, #specialRequest").val("");
+		$("#numberOfChild, #numberOfInfant, #reservationPriceInteger, #reservationPriceDecimal, #idReservationEditor, #reservationPriceIDR").val(0);
+		$("#durationOfDay, #numberOfAdult").val(1);
+		$("#optionPickUpArea").val($("#optionPickUpArea option:first").val());
+		$("#reservationHour").val($("#reservationHour option:first").val());
+		$("#reservationMinute").val($("#reservationMinute option:first").val());
+		$("#reservationPriceType").val($("#reservationPriceType option:first").val());
+		$("#bookingCode").val(bookingCodeManual);
+		$("#selfDriveStatus").val("");
 
-					var currencyType	=	$("#reservationPriceType option:first").val(),
-						currExchangeData=	JSON.parse(localStorage.getItem("currExchangeData"));
-					
-					$.each(currExchangeData, function(index, array) {
-						if(array.CURRENCY == currencyType){
-							$("#currencyExchange").val(numberFormat(array.EXCHANGETOIDR));
-						}
-					});
-					setDateTimeEndDisableStatus();
-				}
-			} else {
-				event.preventDefault();
-				$('#modalWarning').on('show.bs.modal', function() {
-					$('#modalWarningBody').html("Failed to get new booking code. Please try to re-open this menu");
-				});
-				$('#modalWarning').modal('show');
+		var currencyType	=	$("#reservationPriceType option:first").val(),
+			currExchangeData=	JSON.parse(localStorage.getItem("currExchangeData"));
+		
+		$.each(currExchangeData, function(index, array) {
+			if(array.CURRENCY == currencyType){
+				$("#currencyExchange").val(numberFormat(array.EXCHANGETOIDR));
 			}
-		}
+		});
+		setDateTimeEndDisableStatus();
 	}
 });
 
