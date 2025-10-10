@@ -1,3 +1,4 @@
+var $confirmDialog= $('#modal-confirm-action');
 if (carRentalFeeCostFunc == null){
 	var carRentalFeeCostFunc	=	function(){
 		$(document).ready(function () {
