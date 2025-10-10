@@ -536,7 +536,7 @@ class MainOperation extends CI_Model {
 	
 	public function getProductTypeById($idProductType){
 
-		$query	= $this->db->query("SELECT PRODUCTTYPE FROM m_producttype WHERE IDPRODUCTTYPE = ".$idVendor);
+		$query	= $this->db->query("SELECT PRODUCTTYPE FROM m_producttype WHERE IDPRODUCTTYPE = ".$idProductType);
 		$row	= $query->row_array();
 
 		if(isset($row)){
