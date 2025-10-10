@@ -32,6 +32,7 @@
 		<ul class="nav nav-tabs" id="tabsPanel">
 			<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#calendarTab"><i class="fa fa-calendar"></i> Schedule Calendar</a></li>
 			<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#reservationTab"><i class="fa fa-list"></i> Reservation List</a></li>
+			<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#dropOffPickUpTab"><i class="fa fa-calendar-plus-o"></i> Drop Off & Pick Up</a></li>
 		</ul>
 	</div>
 </div>
@@ -110,6 +111,56 @@
 						<h5>No Data Found</h5>
 						<p>There are no unscheduled reservations <b>on the date</b> you have selected</p>
 					</div>
+				</div>
+			</div>
+			<div class="tab-pane fade" id="dropOffPickUpTab">
+				<div class="row border-bottom mb-20 pb-10">
+					<div class="col-lg-2 col-sm-6">
+						<div class="form-group">
+							<label for="dropOffPickUpTab-optionVendor" class="control-label">Car Vendor</label>
+							<select id="dropOffPickUpTab-optionVendor" name="dropOffPickUpTab-optionVendor" class="form-control" option-all="All Vendor"></select>
+						</div>
+					</div>
+					<div class="col-lg-2 col-sm-6 mb-10">
+						<div class="form-group">
+							<label for="dropOffPickUpTab-optionDriver" class="control-label">Driver</label>
+							<select id="dropOffPickUpTab-optionDriver" name="dropOffPickUpTab-optionDriver" class="form-control" option-all="All Driver"></select>
+						</div>
+					</div>
+					<div class="col-lg-2 col-sm-6 mb-10">
+						<div class="form-group">
+							<label for="dropOffPickUpTab-startDate" class="control-label">Date Schedule</label>
+							<input type="text" class="form-control input-date-single mb-10 text-center" id="dropOffPickUpTab-startDate" name="dropOffPickUpTab-startDate" value="<?=date('d-m-Y')?>">
+						</div>
+					</div>
+					<div class="col-lg-2 col-sm-6 mb-10">
+						<div class="form-group">
+							<label for="dropOffPickUpTab-endDate" class="control-label">.</label>
+							<input type="text" class="form-control input-date-single text-center" id="dropOffPickUpTab-endDate" name="dropOffPickUpTab-endDate" value="<?=$next7DayDate?>">
+						</div>
+					</div>
+					<div class="col-lg-4 col-sm-12">
+						<div class="form-group">
+							<label for="dropOffPickUpTab-searchKeyword" class="control-label">Type something to search data</label>
+							<input type="text" class="form-control mb-10" id="dropOffPickUpTab-searchKeyword" name="dropOffPickUpTab-searchKeyword" placeholde="Type something and press ENTER to search">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<table class="table" id="dropOffPickUpTab-tableData">
+						<thead class="thead-light">
+							<tr>
+								<th>Reservation Details</th>
+								<th width="300">Customer Details</th>
+								<th width="350">Car Details</th>
+								<th width="300">Drop Off</th>
+								<th width="300">Pick Up</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr><th colspan="5" class="text-center">No data found</th></tr>
+						</tbody>
+					</table>
 				</div>
 			</div>
 		</div>
@@ -425,6 +476,98 @@
 		</form>
 	</div>
 </div>
+<div class="modal fade" tabindex="-1" id="modal-detailDropOffPickUp" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+	<div class="modal-dialog modal-lg" role="document">
+		<form class="modal-content form-horizontal" id="content-detailDropOffPickUp">
+			<div class="modal-header">
+				<h4 class="modal-title">Detail Drop Off / Pick Up Schedule</h4>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+			</div>
+			<div class="modal-body mr-10 ml-10">
+				<div class="row pt-10">
+					<div class="col-lg-6 col-sm-12 border-right">
+						<div class="row">
+							<div class="col-sm-12 mb-10" id="detailDropOffPickUp-containerJobType"></div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Title</h6>
+								<p id="detailDropOffPickUp-title">-</p>
+							</div>
+							<div class="col-lg-6 col-sm-12 mb-10">
+								<h6 class="mb-0">Date Time Start</h6>
+								<p id="detailDropOffPickUp-dateTimeStart">-</p>
+							</div>
+							<div class="col-lg-6 col-sm-12 mb-10">
+								<h6 class="mb-0">Date Time End</h6>
+								<p id="detailDropOffPickUp-dateTimeEnd">-</p>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Customer Name</h6>
+								<p id="detailDropOffPickUp-customerName">-</p>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Contact</h6>
+								<p id="detailDropOffPickUp-customerContact">-</p>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Email</h6>
+								<p id="detailDropOffPickUp-customerEmail">-</p>
+							</div>
+							<div class="col-sm-12 mb-10 pb-10 border-bottom">
+								<h6 class="mb-0">Remark</h6>
+								<p id="detailDropOffPickUp-remark">-</p>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Vendor</h6>
+								<p id="detailDropOffPickUp-vendor">-</p>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Car Details</h6>
+								<p id="detailDropOffPickUp-carDetails">-</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-6 col-sm-12">
+						<div class="row">
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-0">Status</h6>
+								<p id="detailDropOffPickUp-status">-</p>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-2">Driver Handle *</h6>
+								<select id="detailDropOffPickUp-driverHandle" name="detailDropOffPickUp-driverHandle" class="form-control" option-all="Not Set"></select>
+							</div>
+							<div class="col-sm-12 mb-10 d-none" id="detailDropOffPickUp-containerDropOffLocation">
+								<h6 class="mb-2">Drop Off Location *</h6>
+								<textarea class="form-control mb-10 dropOffPickUpTextArea" placeholder="Drop Off Location" id="detailDropOffPickUp-dropOffLocation" name="detailDropOffPickUp-dropOffLocation"></textarea>
+							</div>
+							<div class="col-sm-12 mb-10 d-none" id="detailDropOffPickUp-containerPickUpLocation">
+								<h6 class="mb-2">Pick Up Location *</h6>
+								<textarea class="form-control mb-10 dropOffPickUpTextArea" placeholder="Pick Up Location" id="detailDropOffPickUp-pickUpLocation" name="detailDropOffPickUp-pickUpLocation"></textarea>
+							</div>
+							<div class="col-sm-12 mb-10">
+								<h6 class="mb-2">Notes</h6>
+								<textarea class="form-control mb-10 dropOffPickUpTextArea" placeholder="Notes" id="detailDropOffPickUp-notes" name="detailDropOffPickUp-notes"></textarea>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row pt-10 d-none" id="detailDropOffPickUp-containerNoScheduleWarning">
+					<div class="col-sm-12">
+						<div class="alert alert-warning" role="alert">
+							<i class="zmdi zmdi-info"></i> <span>The car schedule is incomplete. Please complete the car schedule first.</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<input type="hidden" id="detailDropOffPickUp-jobType" name="detailDropOffPickUp-jobType" value="1">
+				<input type="hidden" id="detailDropOffPickUp-idScheduleCar" name="detailDropOffPickUp-idScheduleCar" value="0">
+				<button type="submit" class="button button-primary">Save</button>
+				<button type="button" class="button button-default" data-dismiss="modal">Close</button>
+			</div>
+		</form>
+	</div>
+</div>
 <style>
 @media (max-width: 767px) {
 	.reservationTableElement{
@@ -501,6 +644,10 @@
 .sch-22-hours{width: calc(22 * var(--schedule-width-per-hour))}
 .sch-23-hours{width: calc(23 * var(--schedule-width-per-hour))}
 .sch-24-hours{width: calc(24 * var(--schedule-width-per-hour))}
+
+.dropOffPickUpTextArea {
+  height: 90px !important;
+}
 </style>
 <script>
 	var url = "<?=BASE_URL_ASSETS?>js/page-module/Schedule/scheduleCar.js?<?=date('YmdHis')?>";

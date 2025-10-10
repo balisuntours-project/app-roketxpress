@@ -311,6 +311,10 @@ $route['schedule/carSchedule/getDetailDayOff']['POST']											= 'Schedule/Car
 $route['schedule/carSchedule/APIDeleteCarSchedule/(:any)']['GET']								= 'Schedule/CarSchedule/APIDeleteCarSchedule/$1';
 $route['schedule/carSchedule/deleteCarSchedule']['POST']										= 'Schedule/CarSchedule/deleteCarSchedule';
 $route['schedule/carSchedule/deleteCarDayOff']['POST']											= 'Schedule/CarSchedule/deleteCarDayOff';
+$route['schedule/carSchedule/getDataDropOffPickUpSchedule']['POST']								= 'Schedule/CarSchedule/getDataDropOffPickUpSchedule';
+$route['schedule/carSchedule/getDetailDropOffPickUpSchedule']['POST']							= 'Schedule/CarSchedule/getDetailDropOffPickUpSchedule';
+$route['schedule/carSchedule/saveCarDropOffPickUpSchedule']['POST']							    = 'Schedule/CarSchedule/saveCarDropOffPickUpSchedule';
+$route['schedule/carSchedule/getDataScheduleAdditionalCost']['POST']                            = 'Schedule/CarSchedule/getDataScheduleAdditionalCost';
 
 $route['finance/detailReservationPayment/getDataReservationPayment']['POST']					= 'Finance/DetailReservationPayment/getDataReservationPayment';
 $route['finance/detailReservationPayment/updateRevenueReservation']['POST']						= 'Finance/DetailReservationPayment/updateRevenueReservation';

@@ -181,7 +181,7 @@
 	<div class="modal-dialog modal-xl" role="document">
 		<form class="modal-content form-horizontal" id="container-selectReservationAdditionalCost">
 			<div class="modal-header">
-				<h4 class="modal-title" id="editor-title-selectReservationAdditionalCost">Search Reservation for Additional Cost (Last 30 days)</h4>
+				<h4 class="modal-title" id="editor-title-selectReservationAdditionalCost">Search Reservation for Additional Cost (Last <?=MAX_DAY_ADDITIONAL_COST_INPUT?> days)</h4>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
 			</div>
 			<div class="modal-body">

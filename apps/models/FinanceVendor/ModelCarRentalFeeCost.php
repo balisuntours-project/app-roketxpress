@@ -131,4 +131,91 @@ class ModelCarRentalFeeCost extends CI_Model {
 		if(!$row) return false;
 		return $row;	
 	}
+
+	public function getDataCarRentalAdditionalCost($page, $dataPerPage= 25, $idVendorCar, $idDriver, $startDate, $endDate, $searchKeyword, $viewRequestOnly){		
+		$ci				=&	get_instance();
+		$ci->load->model('MainOperation');
+
+		$startid			=	($page * 1 - 1) * $dataPerPage;
+		$con_idVendorCar	=	$con_idDriver	=	$con_date	=	$con_viewRequestOnly	=	$con_searchKeyword	=	"1=1";
+		$con_searchKeyword	=	!isset($searchKeyword) || $searchKeyword == "" 
+								? "1=1"
+								: "(D.RESERVATIONTITLE LIKE '%".$searchKeyword."%' OR 
+									B.PRODUCTNAME LIKE '%".$searchKeyword."%' OR 
+									D.CUSTOMERNAME LIKE '%".$searchKeyword."%' OR
+									H.NAME LIKE '%".$searchKeyword."%' OR
+									I.CARTYPE LIKE '%".$searchKeyword."%' OR
+									G.BRAND LIKE '%".$searchKeyword."%' OR
+									G.MODEL LIKE '%".$searchKeyword."%' OR
+									G.PLATNUMBER LIKE '%".$searchKeyword."%' OR
+									C.ADDITIONALCOSTTYPE LIKE '%".$searchKeyword."%' OR
+									A.DESCRIPTION LIKE '%".$searchKeyword."%' OR
+									E.NAME LIKE '%".$searchKeyword."%' OR 
+									A.USERAPPROVAL LIKE '%".$searchKeyword."%')";
+		
+		if(!$viewRequestOnly){
+			$con_idVendorCar=	!isset($idVendorCar) || $idVendorCar == "" ? "1=1" : "G.IDVENDOR = ".$idVendorCar;
+			$con_idDriver	=	!isset($idDriver) || $idDriver == "" ? "1=1" : "A.IDDRIVER = ".$idDriver;
+			$con_date		=	"A.DATETIMEINPUT BETWEEN '".$startDate."' AND '".$endDate."'";
+		} else {
+			$con_viewRequestOnly	=	"A.STATUSAPPROVAL = 0";
+		}
+
+		$baseQuery	=	"SELECT A.IDRESERVATIONADDITIONALCOST, D.RESERVATIONTITLE, B.PRODUCTNAME, D.CUSTOMERNAME, H.NAME AS VENDORNAME, I.CARTYPE, G.BRAND, G.MODEL, G.PLATNUMBER,
+								C.ADDITIONALCOSTTYPE, A.DESCRIPTION, A.NOMINAL, E.NAME AS DRIVERNAME, CONCAT('".URL_ADDITIONAL_COST_IMAGE."', A.IMAGERECEIPT) AS IMAGERECEIPT,
+								DATE_FORMAT(A.DATETIMEINPUT, '%d %b %Y %H:%i') AS DATETIMEINPUT, IF(A.STATUSAPPROVAL != 0, DATE_FORMAT(A.DATETIMEAPPROVAL, '%d %b %Y %H:%i'), '-') AS DATETIMEAPPROVAL,
+								IF(A.STATUSAPPROVAL != 0, A.USERAPPROVAL, '-') AS USERAPPROVAL,
+								CASE
+									WHEN A.STATUSAPPROVAL = 0 THEN 'Waiting for approval'
+									WHEN A.STATUSAPPROVAL = 1 THEN 'Approved'
+									WHEN A.STATUSAPPROVAL = -1 THEN 'Rejected'
+									ELSE '-'
+								END AS STRSTATUSAPPROVAL, A.STATUSAPPROVAL
+						FROM t_reservationadditionalcost A
+						LEFT JOIN t_reservationdetails B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
+						LEFT JOIN m_additionalcosttype C ON A.IDADDITIONALCOSTTYPE = C.IDADDITIONALCOSTTYPE
+						LEFT JOIN t_reservation D ON B.IDRESERVATION = D.IDRESERVATION
+						LEFT JOIN m_driver E ON A.IDDRIVER = E.IDDRIVER
+						LEFT JOIN t_schedulecar F ON B.IDRESERVATIONDETAILS = F.IDRESERVATIONDETAILS
+						LEFT JOIN t_carvendor G ON F.IDCARVENDOR = G.IDCARVENDOR
+						LEFT JOIN m_vendor H ON G.IDVENDOR = H.IDVENDOR
+						LEFT JOIN m_cartype I ON G.IDCARTYPE = I.IDCARTYPE
+						WHERE B.IDPRODUCTTYPE = 3 AND ".$con_idVendorCar." AND ".$con_idDriver." AND ".$con_date." AND ".$con_viewRequestOnly." AND ".$con_searchKeyword."
+						ORDER BY A.DATETIMEINPUT ASC";
+		$query		=	$this->db->query($baseQuery." LIMIT ".$startid.", ".$dataPerPage);
+		$result		=	$query->result();
+		
+		if(isset($result)) return $ci->MainOperation->generateResultPagination($result, $baseQuery, "IDRESERVATIONADDITIONALCOST", $page, $dataPerPage);		
+		return $ci->MainOperation->generateEmptyResult();
+	}
+
+	public function getListScheduleAdditionalCost($idDriver, $idJobType, $scheduleDate, $keyword){
+		$con_driver	=	isset($idDriver) && $idDriver != "" ? "A.IDDRIVER = ".$idDriver : "1=1";
+		$con_jobType=	isset($idJobType) && $idJobType != "" ? "A.JOBTYPE = ".$idJobType : "1=1";
+		$minDate	=	date('Y-m-d', strtotime('-'.MAX_DAY_ADDITIONAL_COST_INPUT.' days', strtotime(date('Y-m-d'))));
+		$query		=	$this->db->query(
+							"SELECT A.JOBTYPE, D.BOOKINGCODE, IF(A.JOBTYPE = 1, CONCAT(DATE_FORMAT(D.RESERVATIONDATESTART, '%d %b %Y'), ' ', LEFT(D.RESERVATIONTIMESTART, 5)),
+									CONCAT(DATE_FORMAT(D.RESERVATIONDATEEND, '%d %b %Y'), ' ', LEFT(D.RESERVATIONTIMEEND, 5))) AS SCHEDULEDATETIME, D.RESERVATIONTITLE, D.CUSTOMERNAME,
+									E.NAME AS DRIVERNAME, CONCAT('[', IFNULL(G.NAME, '-'), '] ', IFNULL(F.BRAND, '-'), ' ', IFNULL(F.MODEL, '-'), ' - ', IFNULL(F.PLATNUMBER, '-')) AS CARDETAIL,
+									IF(A.JOBTYPE = 1, A.LOCATIONDROPOFF, A.LOCATIONPICKUP) AS LOCATION, B.IDRESERVATIONDETAILS, A.IDDRIVER
+							FROM t_schedulecardropoffpickup A
+							LEFT JOIN t_schedulecar B ON A.IDSCHEDULECAR = B.IDSCHEDULECAR
+							LEFT JOIN t_reservationdetails C ON B.IDRESERVATIONDETAILS = C.IDRESERVATIONDETAILS
+							LEFT JOIN t_reservation D ON C.IDRESERVATION = D.IDRESERVATION
+							LEFT JOIN m_driver E ON A.IDDRIVER = E.IDDRIVER
+							LEFT JOIN t_carvendor F ON B.IDCARVENDOR = F.IDCARVENDOR
+							LEFT JOIN m_vendor G ON F.IDVENDOR = G.IDVENDOR
+							WHERE (D.RESERVATIONDATESTART >= '".$minDate."' OR D.RESERVATIONDATEEND >= '".$minDate."') AND 
+								(D.RESERVATIONDATESTART = '".$scheduleDate."' OR D.RESERVATIONDATEEND = '".$scheduleDate."') AND
+								C.STATUS = 1 AND ".$con_driver." AND ".$con_jobType." AND
+								(D.CUSTOMERNAME LIKE '%".$keyword."%' OR D.RESERVATIONTITLE LIKE '%".$keyword."%' OR D.BOOKINGCODE LIKE '%".$keyword."%' OR
+								E.NAME LIKE '%".$keyword."%' OR F.BRAND LIKE '%".$keyword."%' OR F.MODEL LIKE '%".$keyword."%' OR F.PLATNUMBER LIKE '%".$keyword."%' OR
+								G.NAME LIKE '%".$keyword."%' OR A.LOCATIONDROPOFF LIKE '%".$keyword."%' OR A.LOCATIONPICKUP LIKE '%".$keyword."%')
+							ORDER BY D.RESERVATIONDATESTART"
+						);
+		$result	=	$query->result();
+
+		if(isset($result)) return $result;
+		return false;
+	}
 }

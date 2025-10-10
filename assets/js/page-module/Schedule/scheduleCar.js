@@ -3,21 +3,37 @@ var $confirmDeleteDialog= $('#modal-confirm-action');
 if (scheduleCarFunc == null){
 	var scheduleCarFunc	=	function(){
 		$(document).ready(function () {
-			var callbackFunc	=	null;
+			setOptionHelper('optionMonth', 'optionMonth', thisMonth, false);
+			setOptionHelper('optionYear', 'optionYear', false, false);
 			setOptionHelper('calendarTab-optionVendorCar', 'dataVendorCar');
 			setOptionHelper('calendarTab-optionCarType', 'dataCarType');
 			setOptionHelper('reservationTab-optionSource', 'dataSource');
 			setOptionHelper('addCarDayOff-optionType', 'dataCarDayOffType');
 			setOptionHelper('addCarDayOff-hourStart', 'dataHours');
 			setOptionHelper('addCarDayOff-optionCarCostType', 'dataCarCostType');
+			setOptionHelper('dropOffPickUpTab-optionVendor', 'dataVendorCar');
+			setOptionHelper('dropOffPickUpTab-optionDriver', 'dataDriverCarRental');
+			setOptionHelper('detailDropOffPickUp-driverHandle', 'dataDriverCarRental');
+
 			$("#reservationTab-dateSchedule").val("");
 			onChangeDateInputFilter($("#reservationTab-dateSchedule"));
+			getCarSchedule();
+		});	
+	}
+}
 
+$('a[data-toggle="tab"]').off('shown.bs.tab');
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+	var activeTabId = $(e.target).attr('href');
+
+	switch (activeTabId) {
+		case '#calendarTab'		: getCarSchedule(); break;
+		case '#reservationTab'	: 
+			var callbackFunc = null;
 			if(localStorage.getItem('OSNotificationData') === null || localStorage.getItem('OSNotificationData') === undefined){
 				setOptionHelper('optionMonth', 'optionMonth', thisMonth, false);
 				setOptionHelper('optionYear', 'optionYear', false, false);
 			} else {
-
 				var OSNotificationData	=	JSON.parse(localStorage.getItem('OSNotificationData'));
 				var OSNotifType			=	OSNotificationData.type;
 				var OSNotifMonth		=	OSNotificationData.month;
@@ -33,15 +49,13 @@ if (scheduleCarFunc == null){
 						$('.addCarBtn[data-idreservationdetails='+idReservationDetails+']').trigger("click");
 					}
 					localStorage.removeItem("OSNotificationData");
-				}
-				
+				}	
 			}
-
-			getCarSchedule();
 			getDataReservationSchedule(callbackFunc);
-		});	
+			break;
+		case '#dropOffPickUpTab': getDataDropOffPickUpSchedule(); break;
 	}
-}
+});
 
 $('#optionMonth, #optionYear').off('change');
 $('#optionMonth, #optionYear').on('change', function(e) {
@@ -1003,6 +1017,256 @@ function showModalDetailDayOff(idDayoff = 0){
 			}
 		}
 	});
+}
+
+$('#dropOffPickUpTab-optionVendor, #dropOffPickUpTab-optionDriver, #dropOffPickUpTab-startDate, #dropOffPickUpTab-endDate').off('change');
+$('#dropOffPickUpTab-optionVendor, #dropOffPickUpTab-optionDriver, #dropOffPickUpTab-startDate, #dropOffPickUpTab-endDate').on('change', function (e) {
+	getDataDropOffPickUpSchedule();
+});
+
+$('#dropOffPickUpTab-searchKeyword').off('keypress');
+$("#dropOffPickUpTab-searchKeyword").on('keypress', function (e) {
+	if (e.which == 13) {
+		getDataDropOffPickUpSchedule();
+	}
+});
+
+function getDataDropOffPickUpSchedule() {
+	var $tableBody		=	$('#dropOffPickUpTab-tableData > tbody'),
+		columnNumber	=	$('#dropOffPickUpTab-tableData > thead > tr > th').length,
+		idVendorCar		=	$('#dropOffPickUpTab-optionVendor').val(),
+		idDriver		=	$('#dropOffPickUpTab-optionDriver').val(),
+		startDate		=	$('#dropOffPickUpTab-startDate').val(),
+		endDate			=	$('#dropOffPickUpTab-endDate').val(),
+		searchKeyword 	=	$('#dropOffPickUpTab-searchKeyword').val(),
+		dataSend		=	{
+			idVendorCar:idVendorCar,
+			idDriver: idDriver,
+			startDate:startDate,
+			endDate:endDate,
+			searchKeyword:searchKeyword
+		};
+	
+	$.ajax({
+		type: 'POST',
+		url: baseURL +"schedule/carSchedule/getDataDropOffPickUpSchedule",
+		contentType: 'application/json',
+		dataType: 'json',
+		cache: false,
+		data: mergeDataSend(dataSend),
+		beforeSend:function(){
+			NProgress.set(0.4);
+			$tableBody.html("<tr><td colspan='"+columnNumber+"'><center><i class='fa fa-spinner fa-pulse'></i><br/>Loading data...</center></td></tr>");
+		},
+		success:function(response){
+			NProgress.done();
+			setUserToken(response);
+
+			var data = response.dataTable,
+				rows = "";
+			
+			if (response.status != 200 || data.length === 0) {
+				rows = "<tr><td colspan='" + columnNumber + "' align='center'><b>" + response.msg +"</b></td></tr>";
+			} else {
+				$.each(data, function (index, array) {
+					let idScheduleCar		=	array.IDSCHEDULECAR == null ? 0 : array.IDSCHEDULECAR,
+						transmissionName	=	array.PLATNUMBER == '-' ? '-' : array.TRANSMISSION,
+						dropOffBadgeStatus	=	generateBadgeStatusDropOffPickUp(array.DROPOFFSTATUSPROCCESSID, array.DROPOFFSTATUSPROCCESS, true),
+						pickUpBadgeStatus	=	generateBadgeStatusDropOffPickUp(array.PICKUPSTATUSPROCCESSID, array.PICKUPSTATUSPROCCESS, true),
+						btnDropOffSchedule	=	btnPickUpSchedule	=	'<div class="alert alert-warning position-absolute p-2 mb-10" role="alert" style="bottom: 0; width:96%"><i class="zmdi zmdi-info"></i> <span>No car schedule</span></div>';
+
+					if(idScheduleCar > 0){
+						btnDropOffSchedule	=	"<button class='button button-sm btn-block button-info text-left mb-10 position-absolute p-2' style='bottom: 0; width:96%' onclick='showModalDetailDropOffPickUpSchedule("+array.IDRESERVATION+", 1)'>"+
+													"<b>"+array.DROPOFFDRIVERNAME+"</b>"+dropOffBadgeStatus+"<br/>"+
+													"Note : "+array.DROPOFFNOTES+
+												"</button>";
+						btnPickUpSchedule	=	"<button class='button button-sm btn-block button-info text-left mb-10 position-absolute p-2' style='bottom: 0; width:96%' onclick='showModalDetailDropOffPickUpSchedule("+array.IDRESERVATION+", 2)'>"+
+													"<b>"+array.PICKUPDRIVERNAME+"</b>"+pickUpBadgeStatus+"<br/>"+
+													"Note : "+array.PICKUPNOTES+
+												"</button>";
+					}
+
+					rows	+=	"<tr>"+
+									"<td>"+
+										"<b>"+array.BOOKINGCODE+"</b><br/>"+
+										"<b>["+array.DURATIONOFDAY+" Days] "+array.RESERVATIONTITLE+"</b><br/><br/>"+
+										"<b class='text-primary'>"+array.RESERVATIONDATESTART+" "+array.RESERVATIONTIMESTART+"</b><br/>"+
+										"<b class='text-secondary'>"+array.RESERVATIONDATEEND+" "+array.RESERVATIONTIMEEND+"</b><br/><br/>"+
+										"Remark : "+array.REMARK+"<br/>"+
+									"</td>"+
+									"<td>"+
+										"<div class='order-details-customer-info'>"+
+											"<ul>"+
+												"<li> <span>Name</span> <span><b>"+array.CUSTOMERNAME+"</b></span> </li>"+
+												"<li> <span>Contact</span> <span>"+array.CUSTOMERCONTACT+"</span> </li>"+
+												"<li> <span>Email</span> <span>"+array.CUSTOMEREMAIL+"</span> </li>"+
+											"</ul>"+
+										"</div>"+
+									"</td>"+
+									"<td>"+
+										"<div class='order-details-customer-info'>"+
+											"<ul>"+
+												"<li> <span>Vendor</span> <span><b>"+array.VENDORNAME+"</b></span> </li>"+
+												"<li> <span>Car</span> <span>"+array.BRAND+" "+array.MODEL+" ["+transmissionName+"]</span> </li>"+
+												"<li> <span>Plate</span> <span>"+array.PLATNUMBER+"</span> </li>"+
+												"<li> <span>Type</span> <span>"+array.CARTYPE+"</span> </li>"+
+											"</ul>"+
+										"</div>"+
+									"</td>"+
+									"<td class='position-relative'>"+
+										"<b class='text-primary'>"+array.RESERVATIONDATESTART+" "+array.RESERVATIONTIMESTART+"</b><br/>"+
+										array.DROPOFFLOCATION+"<br/>"+
+										btnDropOffSchedule+
+									"</td>"+
+									"<td class='position-relative'>"+
+										"<b class='text-success'>"+array.RESERVATIONDATEEND+" "+array.RESERVATIONTIMEEND+"</b><br/>"+
+										array.PICKUPLOCATION+"<br/><br/>"+
+										btnPickUpSchedule+
+									"</td>"+
+								"</tr>";
+				});
+			}
+			$tableBody.html(rows);
+		}
+	});
+}
+
+function showModalDetailDropOffPickUpSchedule(idReservation, jobType) {
+	var dataSend = { idReservation: idReservation, jobType: jobType };
+
+	$.ajax({
+		type: 'POST',
+		url: baseURL + "schedule/carSchedule/getDetailDropOffPickUpSchedule",
+		contentType: 'application/json',
+		dataType: 'json',
+		cache: false,
+		data: mergeDataSend(dataSend),
+		beforeSend: function () {
+			NProgress.set(0.4);
+			$('#window-loader').modal('show');
+			$("#detailDropOffPickUp-title, #detailDropOffPickUp-dateTimeStart, #detailDropOffPickUp-dateTimeEnd, #detailDropOffPickUp-customerName").html("-");
+			$("#detailDropOffPickUp-customerContact, #detailDropOffPickUp-customerEmail, #detailDropOffPickUp-remark, #detailDropOffPickUp-carDetails, #detailDropOffPickUp-status").html("-");
+			$("#detailDropOffPickUp-driverHandle, #detailDropOffPickUp-pickUpLocation, #detailDropOffPickUp-dropOffLocation, #detailDropOffPickUp-notes").val("");
+			$("#detailDropOffPickUp-jobType, #detailDropOffPickUp-idScheduleCar").val(0);
+		},
+		success: function (response) {
+			$('#window-loader').modal('hide');
+			NProgress.done();
+			setUserToken(response);
+
+			if (response.status == 200) {
+				var detailReservation		=	response.detailReservation
+					dropOffPickUpSchedule	=	response.dropOffPickUpSchedule
+					badgeJobType			=	jobType == 1 ? '<span class="badge badge-primary">Drop Off</span>' : '<span class="badge badge-success">Pick Up</span>';
+
+				$("#detailDropOffPickUp-title").html("[" + detailReservation.BOOKINGCODE + "] [" + detailReservation.DURATIONOFDAY + " Days] " + detailReservation.RESERVATIONTITLE);
+				$("#detailDropOffPickUp-dateTimeStart").html(detailReservation.RESERVATIONDATESTART + " " + detailReservation.RESERVATIONTIMESTART);
+				$("#detailDropOffPickUp-dateTimeEnd").html(detailReservation.RESERVATIONDATEEND + " " + detailReservation.RESERVATIONTIMEEND);
+				$("#detailDropOffPickUp-customerName").html(detailReservation.CUSTOMERNAME);
+				$("#detailDropOffPickUp-customerContact").html(detailReservation.CUSTOMERCONTACT);
+				$("#detailDropOffPickUp-customerEmail").html(detailReservation.CUSTOMEREMAIL);
+				$("#detailDropOffPickUp-remark").html(detailReservation.REMARK);
+				$("#detailDropOffPickUp-containerJobType").html(badgeJobType);
+
+				if(jobType == 1){
+					$("#detailDropOffPickUp-containerDropOffLocation").removeClass('d-none');
+					$("#detailDropOffPickUp-containerPickUpLocation").addClass('d-none');
+				} else {
+					$("#detailDropOffPickUp-containerDropOffLocation").addClass('d-none');
+					$("#detailDropOffPickUp-containerPickUpLocation").removeClass('d-none');
+				}
+
+				if (dropOffPickUpSchedule == false){
+					$("#detailDropOffPickUp-vendor, #detailDropOffPickUp-carDetails").html('-');
+					$("#detailDropOffPickUp-driverHandle, #detailDropOffPickUp-dropOffLocation, #detailDropOffPickUp-pickUpLocation, #detailDropOffPickUp-notes").prop('disabled', true);
+					$("#detailDropOffPickUp-containerNoScheduleWarning").removeClass('d-none');
+				} else {
+					let badgeStatus		=	generateBadgeStatusDropOffPickUp(dropOffPickUpSchedule.IDSTATUSPROCESSCARDROPOFFPICKUP, dropOffPickUpSchedule.STATUSPROCESSNAME),
+						locationDropOff	=	dropOffPickUpSchedule.LOCATIONDROPOFF == '' || dropOffPickUpSchedule.LOCATIONDROPOFF == null ? detailReservation.DROPOFFLOCATION : dropOffPickUpSchedule.LOCATIONDROPOFF,
+						locationPickUp	=	dropOffPickUpSchedule.LOCATIONPICKUP == '' || dropOffPickUpSchedule.LOCATIONPICKUP == null ? detailReservation.PICKUPLOCATION : dropOffPickUpSchedule.LOCATIONPICKUP;
+					
+					$("#detailDropOffPickUp-vendor").html(dropOffPickUpSchedule.VENDORNAME + ' - ' + dropOffPickUpSchedule.CARTYPE);
+					$("#detailDropOffPickUp-carDetails").html(dropOffPickUpSchedule.BRAND+' '+dropOffPickUpSchedule.MODEL+' ['+dropOffPickUpSchedule.TRANSMISSION+'] - '+dropOffPickUpSchedule.PLATNUMBER);
+					$("#detailDropOffPickUp-status").html(badgeStatus);
+					$("#detailDropOffPickUp-driverHandle").val(dropOffPickUpSchedule.IDDRIVER);
+					$("#detailDropOffPickUp-dropOffLocation").val(locationDropOff);
+					$("#detailDropOffPickUp-pickUpLocation").val(locationPickUp);
+					$("#detailDropOffPickUp-notes").val(dropOffPickUpSchedule.NOTES);
+					$("#detailDropOffPickUp-driverHandle, #detailDropOffPickUp-dropOffLocation, #detailDropOffPickUp-pickUpLocation, #detailDropOffPickUp-notes").prop('disabled', false);
+					$("#detailDropOffPickUp-containerNoScheduleWarning").addClass('d-none');
+					$("#detailDropOffPickUp-jobType").val(jobType);
+					$("#detailDropOffPickUp-idScheduleCar").val(dropOffPickUpSchedule.IDSCHEDULECAR);
+				}
+
+				$('#modal-detailDropOffPickUp').modal('show');
+			} else {
+				$('#modalWarning').on('show.bs.modal', function () {
+					$('#modalWarningBody').html(response.msg);
+				});
+				$('#modalWarning').modal('show');
+			}
+		}
+	});
+}
+
+$('#content-detailDropOffPickUp').off('submit');
+$('#content-detailDropOffPickUp').on('submit', function(e) {
+	e.preventDefault();	
+	var idScheduleCar	=	$("#detailDropOffPickUp-idScheduleCar").val(),
+		jobType			=	$("#detailDropOffPickUp-jobType").val(),
+		driverHandle	=	$("#detailDropOffPickUp-driverHandle").val(),
+		dropOffLocation	=	$("#detailDropOffPickUp-dropOffLocation").val(),
+		pickUpLocation	=	$("#detailDropOffPickUp-pickUpLocation").val(),
+		notes			=	$("#detailDropOffPickUp-notes").val(),
+		dataSend		=	{
+			idScheduleCar:idScheduleCar,
+			jobType: jobType,
+			driverHandle: driverHandle,
+			dropOffLocation: dropOffLocation,
+			pickUpLocation: pickUpLocation,
+			notes: notes
+		};
+		
+	$.ajax({
+		type: 'POST',
+		url: baseURL+"schedule/carSchedule/saveCarDropOffPickUpSchedule",
+		contentType: 'application/json',
+		dataType: 'json',
+		data: mergeDataSend(dataSend),
+		beforeSend:function(){
+			$("#content-unscheduledList :input").attr("disabled", true);
+			NProgress.set(0.4);
+			$('#window-loader').modal('show');
+		},
+		success:function(response){
+			setUserToken(response);
+			$('#window-loader').modal('hide');
+			NProgress.done();
+			
+			$('#modalWarning').on('show.bs.modal', function() {
+				$('#modalWarningBody').html(response.msg);
+			});
+			$('#modalWarning').modal('show');
+
+			if(response.status == 200){
+				$('#modal-detailDropOffPickUp').modal('hide');
+				getDataDropOffPickUpSchedule();
+			}
+		}
+	});
+});
+
+function generateBadgeStatusDropOffPickUp(idStatusProcess, statusProcessName, pullRight = false){
+	let classPull	=	pullRight ? ' pull-right' : '',
+		badgeStatus = '<span class="badge badge-dark' + classPull + '">Unscheduled</span>';
+	switch (idStatusProcess) {
+		case "1": badgeStatus = '<span class="badge badge-warning' + classPull + '">' + statusProcessName + '</span>'; break;
+		case "2": badgeStatus = '<span class="badge badge-primary' + classPull + '">' + statusProcessName + '</span>'; break;
+		case "3": badgeStatus = '<span class="badge badge-success' + classPull + '">' + statusProcessName + '</span>'; break;
+		default	: badgeStatus = '<span class="badge badge-dark' + classPull + '">Unscheduled</span>'; break;
+	}
+
+	return badgeStatus;
 }
 
 scheduleCarFunc();

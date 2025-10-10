@@ -708,5 +708,103 @@ class CarSchedule extends CI_controller {
 		$this->MainOperation->deleteData("t_dayoffcardetail", array("IDDAYOFF"=>$idDayoff));
 		$this->MainOperation->deleteData("t_dayoffrequest", array("IDDAYOFFREQUEST"=>$idDayOffRequest));
 		setResponseOk(array("token"=>$this->newToken, "msg"=>"Car day off has been deleted"));
-	}	
+	}
+	
+	public function getDataDropOffPickUpSchedule(){
+		$this->load->model('Schedule/ModelCarSchedule');
+		
+		$idVendorCar	=	validatePostVar($this->postVar, 'idVendorCar', false);
+		$idDriver		=	validatePostVar($this->postVar, 'idDriver', false);
+		$startDate		=	validatePostVar($this->postVar, 'startDate', true);
+		$startDateDT	=	DateTime::createFromFormat('d-m-Y', $startDate);
+		$startDateFormat=	$startDateDT->format('Y-m-d');
+		$endDate		=	validatePostVar($this->postVar, 'endDate', true);
+		$endDateDT		=	DateTime::createFromFormat('d-m-Y', $endDate);
+		$endDateFormat	=	$endDateDT->format('Y-m-d');
+		$intervalDate	=	$startDateDT->diff($endDateDT);
+		$daysDifference =	$intervalDate->format('%R%a');
+		$searchKeyword	=	validatePostVar($this->postVar, 'searchKeyword', false);
+
+		if($daysDifference > 31) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Allowed date range is maximum 31 days"));
+		if($daysDifference < 0) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Invalid date range filter"));
+
+		$dataTable		=	$this->ModelCarSchedule->getDataDropOffPickUpSchedule($idVendorCar, $idDriver, $startDateFormat, $endDateFormat, $searchKeyword);
+		
+		if(!$dataTable) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No data found for the selected filter"));
+
+		foreach($dataTable as $data){
+			$idReservation	=	$data->IDRESERVATION;
+			$dateDropOff	=	$data->DATEDROPOFF;
+			$datePickUp		=	$data->DATEPICKUP;
+			
+			$detailDropOff	=	$this->ModelCarSchedule->getDetailDropOffPickUpSummary($idReservation, 1, $dateDropOff, $datePickUp);
+			if($detailDropOff){
+				$data->DROPOFFDRIVERNAME		=	$detailDropOff['DRIVERNAME'];
+				$data->DROPOFFSTATUSPROCCESSID	=	$detailDropOff['IDSTATUSPROCESSCARDROPOFFPICKUP'];
+				$data->DROPOFFSTATUSPROCCESS	=	$detailDropOff['STATUSPROCESSNAME'];
+				$data->DROPOFFNOTES				=	$detailDropOff['NOTES'];
+			}
+
+			$detailPickUp	=	$this->ModelCarSchedule->getDetailDropOffPickUpSummary($idReservation, 2, $dateDropOff, $datePickUp);
+			if($detailPickUp){
+				$data->PICKUPDRIVERNAME			=	$detailPickUp['DRIVERNAME'];
+				$data->PICKUPSTATUSPROCCESSID	=	$detailPickUp['IDSTATUSPROCESSCARDROPOFFPICKUP'];
+				$data->PICKUPSTATUSPROCCESS		=	$detailPickUp['STATUSPROCESSNAME'];
+				$data->PICKUPNOTES				=	$detailPickUp['NOTES'];
+			}
+		}
+
+		setResponseOk(array("token"=>$this->newToken, "dataTable"=>$dataTable));	
+	}
+	
+	public function getDetailDropOffPickUpSchedule(){
+		$this->load->model('Schedule/ModelCarSchedule');
+		
+		$idReservation		=	validatePostVar($this->postVar, 'idReservation', true);
+		$jobType			=	validatePostVar($this->postVar, 'jobType', true);
+		$detailReservation	=	$this->ModelCarSchedule->getDetailDropOffPickUpReservation($idReservation, $jobType);
+
+		if(!$detailReservation) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No details found for the selected schedule"));
+
+		$dateDropOff			=	$detailReservation['DATEDROPOFF'];
+		$datePickUp				=	$detailReservation['DATEPICKUP'];
+		$dropOffPickUpSchedule	=	$this->ModelCarSchedule->getDropOffPickUpSchedule($idReservation, $jobType, $dateDropOff, $datePickUp);
+
+		setResponseOk(array("token"=>$this->newToken, "detailReservation"=>$detailReservation, "dropOffPickUpSchedule"=>$dropOffPickUpSchedule));
+	}
+	
+	public function saveCarDropOffPickUpSchedule(){
+		$this->load->model('MainOperation');
+		$this->load->model('Schedule/ModelCarSchedule');
+		
+		$idScheduleCar	=	validatePostVar($this->postVar, 'idScheduleCar', true);
+		$jobType		=	validatePostVar($this->postVar, 'jobType', true);
+		$driverHandle	=	validatePostVar($this->postVar, 'driverHandle', true);
+		$dropOffLocation=	$pickUpLocation	=	'';
+
+		if($jobType == 1) $dropOffLocation	=	validatePostVar($this->postVar, 'dropOffLocation', true);
+		if($jobType == 2) $pickUpLocation	=	validatePostVar($this->postVar, 'pickUpLocation', true);
+		$notes				=	validatePostVar($this->postVar, 'notes', false);
+		$dataUserAdmin		=	$this->MainOperation->getDataUserAdmin($this->newToken);
+		$userAdminName		=	$dataUserAdmin['NAME'];
+		$arrInsertSchedule	=	[
+			"IDSCHEDULECAR"		=>	$idScheduleCar,
+			"IDDRIVER"			=>	$driverHandle,
+			"JOBTYPE"			=>	$jobType,
+			"LOCATIONDROPOFF"	=>	$dropOffLocation,
+			"LOCATIONPICKUP"	=>	$pickUpLocation,
+			"NOTES"				=>	$notes,
+			"INPUTUSER"			=>	$userAdminName,
+			"INPUTDATETIME"		=>	date('Y-m-d H:i:s')
+		];
+		$procInsertSchedule	=	$this->MainOperation->addData("t_schedulecardropoffpickup", $arrInsertSchedule);
+			
+		if(!$procInsertSchedule['status']){
+			switchMySQLErrorCode($procInsertSchedule['errCode'], $this->newToken);
+		} else {
+
+		}
+
+		setResponseOk(array("token"=>$this->newToken, "msg"=>"Drop Off / Pick Up schedule has been saved"));
+	}
 }

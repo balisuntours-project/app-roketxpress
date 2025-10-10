@@ -265,7 +265,10 @@ class View extends CI_controller {
 		$this->load->helper('url');
 		
 		$thisMonth		=	date('m');
-		$data			=	array("thisMonth"=>$thisMonth);
+		$dateToday		=	new DateTime(); 
+		$dateToday->modify('+7 days');
+		$next7DayDate	=	$dateToday->format('d-m-Y');
+		$data			=	array("thisMonth"=>$thisMonth, "next7DayDate"=>$next7DayDate);
 		$htmlRes		=	$this->load->view('page/Schedule/scheduleCar', $data, TRUE);
 		
 		setResponseOk(array("token"=>$this->newToken, "htmlRes"=>$htmlRes));

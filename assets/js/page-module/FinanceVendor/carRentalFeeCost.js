@@ -1,12 +1,17 @@
 if (carRentalFeeCostFunc == null){
 	var carRentalFeeCostFunc	=	function(){
 		$(document).ready(function () {
+			localStorage.setItem('viewConfirmDialogValidateCarRentalCost', '1');
 			setOptionHelper('optionMonth', 'optionMonth', thisMonth, false);
 			setOptionHelper('optionYear', 'optionYear', false, false);
 			setOptionHelper('optionVendorCarRecap', 'dataVendorCar');
 			setOptionHelper('optionVendorCarDetail', 'dataVendorCar');
 			setOptionHelper('optionVendorCarCost', 'dataVendorCar');
 			setOptionHelper('editorCarCost-idCostType', 'dataCarCostType');
+			setOptionHelper('optionVendorAdditionalCost', 'dataVendorCar');
+			setOptionHelper('optionDriverAdditionalCost', 'dataDriverCarRental');
+			setOptionHelper('scheduleAdditionalCost-driver', 'dataDriverCarRental');
+			setOptionHelper('editorAdditionalCost-optionAdditionalCostType', 'dataAdditionalCostType');
 			getDataAllCarVendor();
 			getDataRecapCarRentalCostFee();
 			$("#recognitionDate").val('');
@@ -45,9 +50,10 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
 	var activeTabId	=	$(e.target).attr('href');
 	
 	switch(activeTabId){
-		case '#carRentalCostFeeRecap'	:	getDataRecapCarRentalCostFee(); break;
-		case '#carRentalFeeDetail'		:	getDataDetailCarRentalFee(); break;
-		case '#carRentalCostDetail'		:	getDataDetailCarRentalCost(); break;
+		case '#carRentalCostFeeRecap'			:	getDataRecapCarRentalCostFee(); break;
+		case '#carRentalFeeDetail'				:	getDataDetailCarRentalFee(); break;
+		case '#carRentalCostDetail'				:	getDataDetailCarRentalCost(); break;
+		case '#carRentalAdditionalCostDetail'	:	getDataCarRentalAdditionalCost(); break;
 	}
 });
 
@@ -462,6 +468,461 @@ $('#content-editorCarCost').on('submit', function(e) {
 			}
 		});
 	}
+});
+
+$('#optionVendorAdditionalCost, #optionDriverAdditionalCost, #startDateAdditionalCost, #endDateAdditionalCost').off('change');
+$('#optionVendorAdditionalCost, #optionDriverAdditionalCost, #startDateAdditionalCost, #endDateAdditionalCost').on('change', function (e) {
+	getDataCarRentalAdditionalCost();
+});
+
+$('#cbRequestOnlyAdditionalCost').off('click');
+$("#cbRequestOnlyAdditionalCost").on('click', function (e) {
+	var checked = $("#cbRequestOnlyAdditionalCost").is(':checked');
+
+	if (checked) {
+		$("#optionVendorAdditionalCost, #optionDriverAdditionalCost, #startDateAdditionalCost, #endDateAdditionalCost").attr("disabled", true);
+	} else {
+		$("#optionVendorAdditionalCost, #optionDriverAdditionalCost, #startDateAdditionalCost, #endDateAdditionalCost").attr("disabled", false);
+	}
+
+	getDataCarRentalAdditionalCost();
+});
+
+$('#searchKeywordAdditionalCost').off('keypress');
+$("#searchKeywordAdditionalCost").on('keypress', function (e) {
+	if (e.which == 13) {
+		getDataCarRentalAdditionalCost();
+	}
+});
+
+function generateDataDetailCarRentalAdditionalCost(page) {
+	getDataCarRentalAdditionalCost(page);
+}
+
+function getDataCarRentalAdditionalCost(page = 1) {
+	var $tableBody		=	$('#table-dataCarRentalAdditionalCost > tbody'),
+		columnNumber	=	$('#table-dataCarRentalAdditionalCost > thead > tr > th').length,
+		idVendorCar		=	$('#optionVendorAdditionalCost').val(),
+		idDriver		=	$('#optionDriverAdditionalCost').val(),
+		startDate		=	$('#startDateAdditionalCost').val(),
+		endDate			=	$('#endDateAdditionalCost').val(),
+		searchKeyword	=	$('#searchKeywordAdditionalCost').val(),
+		viewRequestOnly	=	$("#cbRequestOnlyAdditionalCost").is(':checked'),
+		dataSend		=	{
+			page: page,
+			idVendorCar: idVendorCar,
+			idDriver: idDriver,
+			startDate: startDate,
+			endDate: endDate,
+			searchKeyword: searchKeyword,
+			viewRequestOnly: viewRequestOnly
+		};
+
+	$.ajax({
+		type: 'POST',
+		url: baseURL + "financeVendor/carRentalFeeCost/getDataCarRentalAdditionalCost",
+		contentType: 'application/json',
+		dataType: 'json',
+		cache: false,
+		data: mergeDataSend(dataSend),
+		beforeSend: function () {
+			NProgress.set(0.4);
+			$tableBody.html("<tr><td colspan='" + columnNumber + "'><center><i class='fa fa-spinner fa-pulse'></i><br/>Loading data...</center></td></tr>");
+		},
+		success: function (response) {
+			NProgress.done();
+			setUserToken(response);
+
+			var data	= response.result.data,
+				rows 	= "";
+
+			if (data.length === 0) {
+				rows = "<tr><td colspan='" + columnNumber + "' align='center'><center>No data found</center></td></tr>";
+			} else {
+				$.each(data, function (index, array) {
+					var statusApproval	=	parseInt(array.STATUSAPPROVAL),
+						badgeStatus		=	"";
+					switch(statusApproval){
+						case 1	:	badgeStatus	=	'<span class="badge badge-pill badge-primary">Approved</span>'; break;
+						case -1	:	badgeStatus	=	'<span class="badge badge-pill badge-danger">Rejected</span>'; break;
+						case 0	:
+						default	:	badgeStatus	=	'<span class="badge badge-pill badge-warning">Waiting</span>'; break;
+					}
+
+					var driverName		=	array.DRIVERNAME != null && array.DRIVERNAME != "" ? array.DRIVERNAME : "-",
+						vehicleDetail	=	array.BRAND+" "+array.MODEL+" ["+array.PLATNUMBER+"]",
+						costType		=	array.ADDITIONALCOSTTYPE != null && array.ADDITIONALCOSTTYPE != "" ? array.ADDITIONALCOSTTYPE : "-",
+						costNominal		=	array.NOMINAL != null && array.NOMINAL != "" ? numberFormat(array.NOMINAL) : "-",
+						costDescription	=	array.DESCRIPTION != null && array.DESCRIPTION != "" ? array.DESCRIPTION : "-",
+						imageReceiptUrl	=	array.IMAGERECEIPT,
+						btnValidate		=	statusApproval != 0 ? "" :
+											'<button class="button button-box button-primary button-sm" onclick="setValidateAdditionalCost('+array.IDRESERVATIONADDITIONALCOST+', 1)" >'+
+												'<i class="fa fa-check"></i>'+
+											'</button>',
+						btnIgnore		=	statusApproval != 0 ? "" :
+											'<button class="button button-box button-warning button-sm" onclick="setValidateAdditionalCost('+array.IDRESERVATIONADDITIONALCOST+', -1)" >'+
+												'<i class="fa fa-times"></i>'+
+											'</button>';
+					rows	+=	"<tr class='trAdditionalCost' "+
+									"data-id='"+array.IDRESERVATIONADDITIONALCOST+"' "+
+									"data-status='"+statusApproval+"' "+
+									"data-driverName='"+driverName+"' "+
+									"data-vehicleDetail='"+vehicleDetail+"' "+
+									"data-costType='"+costType+"' "+
+									"data-costNominal='"+costNominal+"' "+
+									"data-costDescription='"+costDescription+"' "+
+									"data-imageReceiptUrl='"+imageReceiptUrl+"' "+
+								">"+
+									"<td class='containerTextValidate'>"+badgeStatus+"<br/>"+array.DATETIMEINPUT+"</td>"+
+									"<td>"+
+										"<b>"+array.RESERVATIONTITLE+"</b><br/>"+
+										"<b>"+array.PRODUCTNAME+"</b><br/><br/>"+
+										"Cust : "+array.CUSTOMERNAME+
+									"</td>"+
+									"<td>"+
+										"<b>"+array.VENDORNAME+"</b><br/>"+
+										"<b>"+array.CARTYPE+"</b><br/><br/>"+
+										"Car : "+vehicleDetail+
+									"</td>"+
+									"<td>"+
+										"<b>Driver : "+driverName+"</b><br/>"+
+										"<b>"+costType+"</b><br/><br/>"+
+										"Description : "+costDescription+
+									"</td>"+
+									"<td align='right'>"+costNominal+"</td>"+
+									"<td>"+
+										"<a href='#' data-imgsrc='"+imageReceiptUrl+"' class='zoomImage'>"+
+											"<img src='"+imageReceiptUrl+"' width='150px'>"+
+										"</a>"+
+									"</td>"+
+									"<td align='center'>"+
+										btnValidate+"<br>"+btnIgnore+
+									"</td>"+
+								"</tr>";
+				});
+
+			}
+
+			generatePagination("tablePaginationCarRentalAdditionalCost", page, response.result.pageTotal, "generateDataDetailCarRentalAdditionalCost");
+			generateDataInfo("tableDataCountCarRentalAdditionalCost", response.result.dataStart, response.result.dataEnd, response.result.dataTotal)
+			$tableBody.html(rows);
+
+			$('.zoomImage').off('click');
+			$(".zoomImage").on("click", function () {
+				var imgSrc = $(this).attr('data-imgSrc');
+				$('#zoomReceiptImage').attr('src', imgSrc);
+				$('#modal-zoomReceiptImage').modal('show');
+			});
+		}
+	});
+}
+
+function setValidateAdditionalCost(idAdditionalCost, status){
+	var $trAdditionalCost	=	$(".trAdditionalCost[data-id='"+idAdditionalCost+"']"),
+		driverName			=	$trAdditionalCost.attr('data-driverName'),
+		vehicleDetail		=	$trAdditionalCost.attr('data-vehicleDetail'),
+		costType			=	$trAdditionalCost.attr('data-costType'),
+		costNominal			=	$trAdditionalCost.attr('data-costNominal'),
+		costDescription		=	$trAdditionalCost.attr('data-costDescription'),
+		imageReceiptUrl		=	$trAdditionalCost.attr('data-imageReceiptUrl'),
+		viewConfirmDialog	=	localStorage.getItem('viewConfirmDialogValidateCarRentalCost'),
+		txtValidateStatus	=	status == 1 ? "Approved" : "Rejected";
+	
+	if(viewConfirmDialog == '1'){
+		$("#confirmValidateAdditionalCost-driverName").html(driverName);
+		$("#confirmValidateAdditionalCost-vehicleDetail").html(vehicleDetail);
+		$("#confirmValidateAdditionalCost-costType").html(costType);
+		$("#confirmValidateAdditionalCost-description").html(costDescription);
+		$("#confirmValidateAdditionalCost-nominal").html(costNominal);
+
+		$("#confirmValidateAdditionalCost-textValidateStatus").html(txtValidateStatus);
+		$('#confirmValidateAdditionalCost-imageReceipt').attr('src', imageReceiptUrl);
+		$("#confirmValidateAdditionalCost-confirmBtn").attr('data-idAdditionalCost', idAdditionalCost).attr('data-status', status);
+		$('#modal-confirmValidateAdditionalCost').modal('show');
+	} else {
+		submitValidateAdditionalCost(idAdditionalCost, status);
+	}
+}
+
+$('#confirmValidateAdditionalCost-confirmBtn').off('click');
+$('#confirmValidateAdditionalCost-confirmBtn').on('click', function(e) {
+	e.preventDefault();
+	if($('#disableConfirm').is(":checked")) localStorage.setItem('viewConfirmDialogValidateCarRentalCost', '0');
+	submitValidateAdditionalCost($("#confirmValidateAdditionalCost-confirmBtn").attr('data-idAdditionalCost'), $("#confirmValidateAdditionalCost-confirmBtn").attr('data-status'));
+});
+
+function submitValidateAdditionalCost(idAdditionalCost, status){
+	var dataSend	=	{idAdditionalCost:idAdditionalCost, status:status};
+	$.ajax({
+		type: 'POST',
+		url: baseURL+"financeDriver/additionalCost/submitValidateAdditionalCost",
+		contentType: 'application/json',
+		dataType: 'json',
+		data: mergeDataSend(dataSend),
+		beforeSend:function(){
+			$('#window-loader').modal('show');
+			$('#modal-confirmValidateAdditionalCost').modal('hide');
+		},
+		success:function(response){
+			setUserToken(response);
+			$('#window-loader').modal('hide');
+
+			if(response.status == 200){
+				var $trAdditionalCost	=	$(".trAdditionalCost[data-id='" + idAdditionalCost + "']"),
+					badgeStatus			=	"",
+					status				=	parseInt(response.statusApproval),
+					idAdditionalCost	=	response.idAdditionalCost;
+
+				switch(status){
+					case 1	:	badgeStatus	=	'<span class="badge badge-pill badge-primary">Approved</span>'; break;
+					case -1	:	badgeStatus	=	'<span class="badge badge-pill badge-danger">Rejected</span>'; break;
+					case 0	:
+					default	:	badgeStatus	=	'<span class="badge badge-pill badge-warning">Waiting</span>'; break;
+				}
+
+				$trAdditionalCost.find('td:first').find('span.badge').remove().prepend(badgeStatus);
+				$trAdditionalCost.find('td:last').find('button.button-box').remove();
+				
+				var toastType	=	status == 1 ? "success" : "warning";
+				toastr[toastType](response.msg);
+				getDataCarRentalAdditionalCost();
+			} else {
+				$('#modalWarning').on('show.bs.modal', function() {
+					$('#modalWarningBody').html(response.msg);			
+				});
+				$('#modalWarning').modal('show');
+			}
+		}
+	});
+}
+
+$('#modal-scheduleAdditionalCost').off('show.bs.modal');
+$('#modal-scheduleAdditionalCost').on('show.bs.modal', function(event) {
+	$("#scheduleAdditionalCost-keyword").val("");
+	$("#containerSelectReservationResult").html(
+		'<div class="col-sm-12 text-center mx-auto my-auto">'+
+			'<h2><i class="fa fa-list-alt text-warning"></i></h2>'+
+			'<b class="text-warning">Results goes here</b>'+
+		'</div>'
+	);
+	searchListScheduleAdditionalCost();
+
+	$('#scheduleAdditionalCost-form').off('submit');
+	$('#scheduleAdditionalCost-form').on('submit', function(e) {
+		e.preventDefault();
+		searchListScheduleAdditionalCost();
+	});
+
+	$('#scheduleAdditionalCost-keyword').off('keydown');
+	$('#scheduleAdditionalCost-keyword').on('keydown', function(e) {
+		if(e.which === 13){
+			searchListScheduleAdditionalCost();
+		}
+	});
+
+	$('#scheduleAdditionalCost-date, #scheduleAdditionalCost-type, #scheduleAdditionalCost-driver').off('change');
+	$('#scheduleAdditionalCost-date, #scheduleAdditionalCost-type, #scheduleAdditionalCost-driver').on('change', function(e) {
+		e.preventDefault();
+		searchListScheduleAdditionalCost();
+	});
+});
+
+function searchListScheduleAdditionalCost(){
+	var idDriver	= $("#scheduleAdditionalCost-driver").val(),
+		idJobType	= $("#scheduleAdditionalCost-jobType").val(),
+		scheduleDate= $("#scheduleAdditionalCost-date").val(),
+		keyword		= $("#scheduleAdditionalCost-keyword").val(),
+		dataSend	= {
+			idDriver:idDriver,
+			idJobType:idJobType,
+			scheduleDate:scheduleDate,
+			keyword:keyword
+		};
+	$.ajax({
+		type: 'POST',
+		url: baseURL+"financeVendor/carRentalFeeCost/getDataScheduleAdditionalCost",
+		contentType: 'application/json',
+		dataType: 'json',
+		data: mergeDataSend(dataSend),
+		beforeSend:function(){
+			$("#scheduleAdditionalCost-form :input").attr("disabled", true);
+			NProgress.set(0.4);
+			$('#window-loader').modal('show');
+		},
+		success:function(response){
+			setUserToken(response);
+			$('#window-loader').modal('hide');
+			NProgress.done();
+			$("#scheduleAdditionalCost-form :input").attr("disabled", false);
+
+			if(response.status == 200){
+				var scheduleList	=	response.scheduleList,
+					scheduleRows	=	"";
+					
+				$("#scheduleAdditionalCost-driver").select2({
+					dropdownParent: $('#modal-scheduleAdditionalCost')
+				});
+
+				$.each(scheduleList, function(index, array) {
+					var idReservationDetails= array.IDRESERVATIONDETAILS,
+						badgeJobType		=	parseInt(array.JOBTYPE) == 1 ? '<span class="badge badge-primary">Drop Off</span>' : '<span class="badge badge-success">Pick Up</span>';
+					scheduleRows			+=	'<div class="col-sm-12 pb-1 mb-5 border-bottom rowScheduleDetail"'+
+													' data-idReservationDetails="'+idReservationDetails+'"'+
+													' data-idDriver="'+array.IDDRIVER+'"'+
+													' data-bookingCode="'+array.BOOKINGCODE+'"'+
+													' data-reservationTitle="'+array.RESERVATIONTITLE+'"'+
+													' data-scheduleDateTime="'+array.SCHEDULEDATETIME+'"'+
+													' data-customerName="'+array.CUSTOMERNAME+'"'+
+													' data-driverName="'+array.DRIVERNAME+'"'+
+													' data-carDetail="'+array.CARDETAIL+'"'+
+													'">'+
+														'<div class="row pt-10 pb-1">'+
+															'<div class="col-sm-12">'+
+																badgeJobType+' <span class="badge badge-outline badge-primary"><b>'+array.BOOKINGCODE+'</b> - <b class="text-primary">'+array.SCHEDULEDATETIME+'</b></span>'+
+																'<button type="button" class="button button-sm pull-right" onclick="generateAdditionalCostDataForm('+idReservationDetails+')"><span><i class="fa fa-pencil"></i>Choose</span></button>'+
+															'</div>'+
+															'<div class="col-sm-12">'+
+																'<b>'+array.RESERVATIONTITLE+'</b><br/>'+
+																'<div class="order-details-customer-info">'+
+																	'<ul>'+
+																		'<li> <span>Customer</span> <span>'+array.CUSTOMERNAME+'</span> </li>'+
+																		'<li> <span>Driver</span> <span>'+array.DRIVERNAME+'</span> </li>'+
+																		'<li> <span>Car Detail</span> <span>'+array.CARDETAIL+'</span> </li>'+
+																		'<li> <span>Location</span> <span>'+array.LOCATION+'</span> </li>'+
+																	'</ul>'+
+																'</div>'+
+															'</div>'+
+														'</div>'+
+													'</div>';
+							
+				});
+				
+				$("#scheduleAdditionalCost-containerResult").html(scheduleRows);
+			} else {
+				$("#scheduleAdditionalCost-containerResult").html(
+					'<div class="col-sm-12 text-center mx-auto my-auto">'+
+						'<h2><i class="fa fa-search-minus text-danger"></i></h2>'+
+						'<b class="text-danger">No active schedules found based on the filter you choose</b>'+
+					'</div>'
+				);
+			}
+		}
+	});
+}
+
+function generateAdditionalCostDataForm(idReservationDetails){
+	var elemRowReservationDetail	=	$(".rowScheduleDetail[data-idReservationDetails='"+idReservationDetails+"']"),
+		idDriver					=	elemRowReservationDetail.attr('data-idDriver');
+	
+	$('#editorAdditionalCost-idReservationDetail').val(idReservationDetails);
+	$('#editorAdditionalCost-idDriver').val(idDriver);
+	$('#editorAdditionalCost-bookingCode').html(elemRowReservationDetail.attr('data-bookingCode'));
+	$('#editorAdditionalCost-reservationTitle').html(elemRowReservationDetail.attr('data-reservationTitle'));
+	$('#editorAdditionalCost-scheduleDateTime').html(elemRowReservationDetail.attr('data-scheduleDateTime'));
+	$('#editorAdditionalCost-customerName').html(elemRowReservationDetail.attr('data-customerName'));
+	$('#editorAdditionalCost-driverName').html(elemRowReservationDetail.attr('data-driverName'));
+	$('#editorAdditionalCost-carDetail').html(elemRowReservationDetail.attr('data-carDetail'));
+	$("#editorAdditionalCost-imageAdditionalCostReceipt").attr("src", ASSET_IMG_URL+"noimage.jpg").attr("height", "200px");
+	$("#editorAdditionalCost-additionalCostReceiptFileName").val("");
+	$('#editorAdditionalCost-nominal').val(0);
+	$('#editorAdditionalCost-description').val("");
+	createUploaderAdditionalCostReceipt(idDriver);
+	
+	$('#modal-scheduleAdditionalCost').modal('hide');
+	$('#modal-editorAdditionalCost').modal('show');
+}
+
+function createUploaderAdditionalCostReceipt(idDriver) {
+	idDriver = idDriver == "" ? 0 : idDriver;
+	$('.ajax-file-upload-container').remove();
+	$("#editorAdditionalCost-uploaderAdditionalCostReceipt").uploadFile({
+		url: baseURL + "financeDriver/additionalCost/uploadTransferReceipt/" + idDriver,
+		multiple: false,
+		dragDrop: false,
+		onSuccess: function (files, data, xhr, pd) {
+			if (data.status != 200) {
+				$('#modalWarning').on('show.bs.modal', function () {
+					$('#modalWarningBody').html(data.msg);
+				});
+				$('#modalWarning').modal('show');
+			} else {
+				$('.ajax-file-upload-container').html("");
+				$("#editorAdditionalCost-imageAdditionalCostReceipt").removeAttr('src').attr("src", data.urlTransferReceipt);
+				$("#editorAdditionalCost-additionalCostReceiptFileName").val(data.transferReceiptFileName);
+			}
+		}
+	});
+	$(".ajax-file-upload-container").remove();
+}
+
+$('#form-editorAdditionalCost').off('submit');
+$('#form-editorAdditionalCost').on('submit', function(e) {
+	e.preventDefault();
+	var additionalCostReceiptFileName = $("#editorAdditionalCost-additionalCostReceiptFileName").val();
+	if(additionalCostReceiptFileName == ""){
+		$('#modalWarning').on('show.bs.modal', function() {
+			$('#modalWarningBody').html("Please upload receipt first");
+		});
+		$('#modalWarning').modal('show');
+	} else {
+		var confirmText				=	'Are you sure you want to add new additional cost data?.<br/>Once these data have been saved they <b>cannot be undone</b>.';
+			
+		$confirmDialog.find('#modal-confirm-body').html(confirmText);
+		$confirmDialog.find('#confirmBtn').attr('data-function', "saveNewAdditionalCost");
+		$confirmDialog.modal('show');
+	}
+});
+
+$('#confirmBtn').off('click');
+$('#confirmBtn').on('click', function(e) {
+	var functionUrl	=	$confirmDialog.find('#confirmBtn').attr('data-function');
+	
+	if(functionUrl == 'saveNewAdditionalCost'){
+		var idDriver			=	$('#editorAdditionalCost-idDriver').val(),
+			idReservationDetail	=	$('#editorAdditionalCost-idReservationDetail').val(),
+			idCostType			=	$('#editorAdditionalCost-optionAdditionalCostType').val(),
+			nominal				=	$('#editorAdditionalCost-nominal').val(),
+			description			=	$('#editorAdditionalCost-description').val(),
+			receiptFileName		=	$('#editorAdditionalCost-additionalCostReceiptFileName').val(),
+			dataSend			=	{
+				idDriver:idDriver,
+				idReservationDetail:idReservationDetail,
+				idCostType:idCostType,
+				nominal:nominal,
+				description:description,
+				receiptFileName:receiptFileName
+			};
+		$("#form-editorAdditionalCost :input").attr("disabled", true);
+	}
+		
+	$.ajax({
+		type: 'POST',
+		url: baseURL+"financeDriver/additionalCost/"+functionUrl,
+		contentType: 'application/json',
+		dataType: 'json',
+		data: mergeDataSend(dataSend),
+		beforeSend:function(){
+			NProgress.set(0.4);
+			$confirmDialog.modal('hide');
+			$('#window-loader').modal('show');
+		},
+		success:function(response){
+			setUserToken(response);
+			$('#window-loader').modal('hide');
+			NProgress.done();
+			
+			$('#modalWarning').on('show.bs.modal', function() {
+				$('#modalWarningBody').html(response.msg);
+			});
+			$('#modalWarning').modal('show');
+			$("#form-editorAdditionalCost :input").attr("disabled", false);
+
+			if(response.status == 200){
+				$("#modal-editorAdditionalCost").modal('hide');
+				getDataCarRentalAdditionalCost();
+			}
+		}
+	});
 });
 
 carRentalFeeCostFunc();

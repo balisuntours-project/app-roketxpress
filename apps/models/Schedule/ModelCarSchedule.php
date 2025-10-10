@@ -256,4 +256,108 @@ class ModelCarSchedule extends CI_Model {
 		if(isset($row)) return $row;
 		return false;		
 	}
+	
+	public function getDataDropOffPickUpSchedule($idVendorCar, $idDriver, $startDate, $endDate, $searchKeyword){
+		$con_idVendorCar	=	isset($idVendorCar) && $idVendorCar != "" ? "A.IDVENDOR = ".$idVendorCar : "1=1";
+		$con_idDriver		=	isset($idDriver) && $idDriver != "" ? "A.IDDRIVER = ".$idDriver : "1=1";
+		$con_searchKeyword	=	isset($searchKeyword) && $searchKeyword != "" 
+								? "(C.RESERVATIONTITLE LIKE '%".$searchKeyword."%' OR 
+									C.BOOKINGCODE LIKE '%".$searchKeyword."%' OR 
+									C.REMARK LIKE '%".$searchKeyword."%' OR 
+									C.CUSTOMERNAME LIKE '%".$searchKeyword."%' OR 
+									C.CUSTOMERCONTACT LIKE '%".$searchKeyword."%' OR 
+									C.CUSTOMEREMAIL LIKE '%".$searchKeyword."%' OR 
+									C.CUSTOMEREMAIL LIKE '%".$searchKeyword."%' OR 
+									A.PRODUCTNAME LIKE '%".$searchKeyword."%' OR 
+									A.NOTES LIKE '%".$searchKeyword."%' OR 
+									G.NAME LIKE '%".$searchKeyword."%' OR 
+									F.BRAND LIKE '%".$searchKeyword."%' OR 
+									F.MODEL LIKE '%".$searchKeyword."%' OR 
+									F.PLATNUMBER LIKE '%".$searchKeyword."%')"
+								: "1=1";
+		$baseQuery			=	"SELECT A.IDRESERVATION, C.BOOKINGCODE, C.DURATIONOFDAY, C.RESERVATIONTITLE, DATE_FORMAT(C.RESERVATIONDATESTART, '%d %b %Y') AS RESERVATIONDATESTART,
+										DATE_FORMAT(C.RESERVATIONDATEEND, '%d %b %Y') AS RESERVATIONDATEEND, LEFT(C.RESERVATIONTIMESTART, 5) AS RESERVATIONTIMESTART,
+										LEFT(C.RESERVATIONTIMEEND, 5) AS RESERVATIONTIMEEND, C.REMARK, C.CUSTOMERNAME, C.CUSTOMERCONTACT, C.CUSTOMEREMAIL, IFNULL(G.NAME, 'Not Set') AS VENDORNAME,
+										D.CARTYPE, IFNULL(F.BRAND, '-') AS BRAND, IFNULL(F.MODEL, '-') AS MODEL, IF(F.TRANSMISSION = 1, 'Manual', 'Matic') AS TRANSMISSION,
+										IFNULL(F.PLATNUMBER, '-') AS PLATNUMBER, C.DROPOFFLOCATION, C.PICKUPLOCATION, 'Not Set' AS DROPOFFDRIVERNAME, 0 AS DROPOFFSTATUSPROCCESSID,
+										'Unscheduled' AS DROPOFFSTATUSPROCCESS, '-' AS DROPOFFNOTES, 'Not Set' AS PICKUPDRIVERNAME, 0 AS PICKUPSTATUSPROCCESSID, 'Unscheduled' AS PICKUPSTATUSPROCCESS,
+										'-' AS PICKUPNOTES, C.RESERVATIONDATESTART AS DATEDROPOFF, C.RESERVATIONDATEEND AS DATEPICKUP, E.IDSCHEDULECAR
+								FROM t_reservationdetails A
+								LEFT JOIN m_producttype B ON A.IDPRODUCTTYPE = B.IDPRODUCTTYPE
+								LEFT JOIN t_reservation C ON A.IDRESERVATION = C.IDRESERVATION
+								LEFT JOIN m_cartype D ON A.IDCARTYPE = D.IDCARTYPE
+								LEFT JOIN t_schedulecar E ON A.IDRESERVATIONDETAILS = E.IDRESERVATIONDETAILS
+								LEFT JOIN t_carvendor F ON E.IDCARVENDOR = F.IDCARVENDOR
+								LEFT JOIN m_vendor G ON F.IDVENDOR = G.IDVENDOR
+								LEFT JOIN m_source H ON C.IDSOURCE = H.IDSOURCE
+								WHERE A.IDCARTYPE != 0 AND C.ISSELFDRIVE = 1 AND (C.RESERVATIONDATESTART BETWEEN '".$startDate."' AND '".$endDate."' OR C.RESERVATIONTIMEEND BETWEEN '".$startDate."' AND '".$endDate."') AND
+									".$con_idVendorCar." AND ".$con_idDriver." AND ".$con_searchKeyword."
+								GROUP BY A.IDRESERVATION
+								ORDER BY C.RESERVATIONDATESTART, C.RESERVATIONTIMESTART, C.CUSTOMERNAME";
+		$query				=	$this->db->query($baseQuery);
+		$result				=	$query->result();
+		
+		if(!$result) return false;
+		return $result;
+	}
+
+	public function getDetailDropOffPickUpSummary($idReservation, $jobType, $dateDropOff, $datePickUp){
+		$con_date	=	$jobType == 1 ? "DATE(B.DATETIMESTART) = '".$dateDropOff."'" : "DATE(B.DATETIMEEND) = '".$datePickUp."'";
+		$query		=	$this->db->query(
+							"SELECT A.IDSTATUSPROCESSCARDROPOFFPICKUP, D.NAME AS DRIVERNAME, A.NOTES, E.STATUSPROCESSNAME
+							FROM t_schedulecardropoffpickup A
+							LEFT JOIN t_schedulecar B ON A.IDSCHEDULECAR = B.IDSCHEDULECAR
+							LEFT JOIN t_reservationdetails C ON B.IDRESERVATIONDETAILS = C.IDRESERVATIONDETAILS
+							LEFT JOIN m_driver D ON A.IDDRIVER = D.IDDRIVER
+							LEFT JOIN m_statusprocesscardropoffpickup E ON A.IDSTATUSPROCESSCARDROPOFFPICKUP = E.IDSTATUSPROCESSCARDROPOFFPICKUP
+							WHERE C.IDRESERVATION = '".$idReservation."' AND ".$con_date."
+							LIMIT 1"
+						);
+		$row		=	$query->row_array();
+
+		if(isset($row)) return $row;
+		return false;		
+	}
+
+	public function getDetailDropOffPickUpReservation($idReservation){
+		$query	=	$this->db->query(
+						"SELECT BOOKINGCODE, DURATIONOFDAY, RESERVATIONTITLE, DATE_FORMAT(RESERVATIONDATESTART, '%d %b %Y') AS RESERVATIONDATESTART,
+								DATE_FORMAT(RESERVATIONDATEEND, '%d %b %Y') AS RESERVATIONDATEEND, LEFT(RESERVATIONTIMESTART, 5) AS RESERVATIONTIMESTART,
+								LEFT(RESERVATIONTIMEEND, 5) AS RESERVATIONTIMEEND, CUSTOMERNAME, IF(CUSTOMERCONTACT IS NULL OR CUSTOMERCONTACT = '', '-', CUSTOMERCONTACT) AS CUSTOMERCONTACT,
+								IF(CUSTOMEREMAIL IS NULL OR CUSTOMEREMAIL = '', '-', CUSTOMEREMAIL) AS CUSTOMEREMAIL, IF(REMARK IS NULL OR REMARK = '', '-', REMARK) AS REMARK,
+								RESERVATIONDATESTART AS DATEDROPOFF, RESERVATIONDATEEND AS DATEPICKUP, DROPOFFLOCATION, PICKUPLOCATION
+						FROM t_reservation
+						WHERE IDRESERVATION = '".$idReservation."'
+						LIMIT 1"
+					);
+		$row	=	$query->row_array();
+
+		if(isset($row)) return $row;
+		return false;		
+	}
+
+	public function getDropOffPickUpSchedule($idReservation, $jobType, $dateDropOff, $datePickUp){
+		$con_date	=	$jobType == 1 ? "DATE(A.DATETIMESTART) = '".$dateDropOff."'" : "DATE(A.DATETIMEEND) = '".$datePickUp."'";
+		$query		=	$this->db->query(
+							"SELECT A.IDSCHEDULECAR, A.IDRESERVATIONDETAILS, IFNULL(D.NAME, 'Not Set') AS VENDORNAME, E.CARTYPE, IFNULL(C.BRAND, '-') AS BRAND,
+									IFNULL(C.MODEL, '-') AS MODEL, IF(C.TRANSMISSION = 1, 'Manual', 'Matic') AS TRANSMISSION, IFNULL(C.PLATNUMBER, '-') AS PLATNUMBER,
+									IFNULL(F.IDDRIVER, '') AS IDDRIVER, IFNULL(F.LOCATIONDROPOFF, '') AS LOCATIONDROPOFF, IFNULL(F.LOCATIONPICKUP, '') AS LOCATIONPICKUP,
+									IFNULL(F.NOTES, '') AS NOTES, IFNULL(F.IDSTATUSPROCESSCARDROPOFFPICKUP, 0) AS IDSTATUSPROCESSCARDROPOFFPICKUP, 
+									IFNULL(H.STATUSPROCESSNAME, 'Not Set') AS STATUSPROCESSNAME
+							FROM t_schedulecar A
+							LEFT JOIN t_reservationdetails B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
+							LEFT JOIN t_carvendor C ON A.IDCARVENDOR = C.IDCARVENDOR
+							LEFT JOIN m_vendor D ON C.IDVENDOR = D.IDVENDOR
+							LEFT JOIN m_cartype E ON B.IDCARTYPE = E.IDCARTYPE
+							LEFT JOIN t_schedulecardropoffpickup F ON A.IDSCHEDULECAR = F.IDSCHEDULECAR AND F.JOBTYPE = ".$jobType."
+							LEFT JOIN m_driver G ON F.IDDRIVER = G.IDDRIVER
+							LEFT JOIN m_statusprocesscardropoffpickup H ON F.IDSTATUSPROCESSCARDROPOFFPICKUP = H.IDSTATUSPROCESSCARDROPOFFPICKUP
+							WHERE B.IDRESERVATION = '".$idReservation."' AND ".$con_date."
+							LIMIT 1"
+						);
+		$row		=	$query->row_array();
+
+		if(isset($row)) return $row;
+		return false;		
+	}
 }

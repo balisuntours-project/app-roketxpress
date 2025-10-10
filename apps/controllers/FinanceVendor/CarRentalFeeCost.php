@@ -599,5 +599,44 @@ class CarRentalFeeCost extends CI_controller {
 		
 		$msgResponse	=	$idCarCost == 0 ? "New car cost data has been added" : "Car cost data has been updated";
 		setResponseOk(array("token"=>$this->newToken, "msg"=>$msgResponse));
-	}	
+	}
+	
+	public function getDataCarRentalAdditionalCost(){
+		$this->load->model('FinanceVendor/ModelCarRentalFeeCost');
+
+		$page			=	validatePostVar($this->postVar, 'page', true);
+		$idVendorCar	=	validatePostVar($this->postVar, 'idVendorCar', false);
+		$idDriver		=	validatePostVar($this->postVar, 'idDriver', false);
+		$startDate		=	validatePostVar($this->postVar, 'startDate', true);
+		$startDate		=	DateTime::createFromFormat('d-m-Y', $startDate);
+		$startDate		=	$startDate->format('Y-m-d');
+		$endDate		=	validatePostVar($this->postVar, 'endDate', true);
+		$endDate		=	DateTime::createFromFormat('d-m-Y', $endDate);
+		$endDate		=	$endDate->format('Y-m-d');
+		$searchKeyword	=	validatePostVar($this->postVar, 'searchKeyword', false);
+		$viewRequestOnly=	validatePostVar($this->postVar, 'viewRequestOnly', false);
+		$dataTable		=	$this->ModelCarRentalFeeCost->getDataCarRentalAdditionalCost($page, 25, $idVendorCar, $idDriver, $startDate, $endDate, $searchKeyword, $viewRequestOnly);
+
+		setResponseOk(array("token"=>$this->newToken, "result"=>$dataTable));
+	}
+	
+	public function getDataScheduleAdditionalCost(){
+		$this->load->model('FinanceVendor/ModelCarRentalFeeCost');
+		
+		$idDriver		=	validatePostVar($this->postVar, 'idDriver', false);
+		$idJobType		=	validatePostVar($this->postVar, 'idJobType', false);
+		$scheduleDate	=	validatePostVar($this->postVar, 'scheduleDate', false);
+		$scheduleDate	=	DateTime::createFromFormat('d-m-Y', $scheduleDate);
+		$scheduleDate	=	$scheduleDate->format('Y-m-d');
+		$keyword		=	validatePostVar($this->postVar, 'keyword', false);		
+		$scheduleList	=	$this->ModelCarRentalFeeCost->getListScheduleAdditionalCost($idDriver, $idJobType, $scheduleDate, $keyword);
+		
+		if(!$scheduleList) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No data found"));
+		setResponseOk(
+			array(
+				"token"			=>	$this->newToken,
+				"scheduleList"	=>	$scheduleList
+			)
+		);
+	}
 }
