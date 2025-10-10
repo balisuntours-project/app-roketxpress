@@ -301,23 +301,31 @@ function generateTotalCollectPaymentVendorElem(totalCollectPayment){
 	}
 }
 
-function generateTotalFinanceVendorElem(totalWithdrawalRequest, totalCollectPayment){
+function generateTotalCarRentCostVendorElem(totalCarRentCost){
+	totalCarRentCost	=	totalCarRentCost * 1;
+	if($("#menuFVCRC").length > 0){
+		$("#containerCCarRentCostVendorCounter").remove();
+		if(totalCarRentCost > 0){
+			$("#menuFVCRC a").append('<span class="badge badge-primary badge-pill ml-auto" id="containerCCarRentCostVendorCounter" data-toggle="tooltip" data-original-title="Total new car rent additional cost request" data-placement="right">'+numberFormat(totalCarRentCost)+'</span>');
+			$('[data-toggle="tooltip"]').tooltip();
+		}
+	}
+}
+
+function generateTotalFinanceVendorElem(totalWithdrawalRequest, totalCollectPayment, totalCarRentCost){
 	var totalFinanceVendor	=	0;
 	totalWithdrawalRequest	=	totalWithdrawalRequest * 1;
 	totalCollectPayment		=	totalCollectPayment * 1;
-	
-	if($("#menuFDRPD").length > 0){
-		totalFinanceVendor	+=	totalWithdrawalRequest;
-	}
-	
-	if($("#menuFDRCP").length > 0){
-		totalFinanceVendor	+=	totalCollectPayment;
-	}
+	totalCarRentCost		=	totalCarRentCost * 1;
+
+	if($("#menuFVRFV").length > 0) totalFinanceVendor	+=	totalWithdrawalRequest;
+	if($("#menuFVRCP").length > 0) totalFinanceVendor	+=	totalCollectPayment;
+	if($("#menuFVCRC").length > 0) totalFinanceVendor	+=	totalCarRentCost;
 	
 	if($("#groupMenuFinance-Vendor").length > 0){
 		$("#containerFinanceVendorCounter").remove();
 		if(totalFinanceVendor > 0){
-			$("#groupMenuFinance-Vendor").after('<span class="badge badge-primary badge-pill ml-auto mr-4" id="containerFinanceVendorCounter" data-toggle="tooltip" data-original-title="Total new finance (driver) request" data-placement="right">'+numberFormat(totalFinanceVendor)+'</span>');
+			$("#groupMenuFinance-Vendor").after('<span class="badge badge-primary badge-pill ml-auto mr-4" id="containerFinanceVendorCounter" data-toggle="tooltip" data-original-title="Total new finance (vendor) request" data-placement="right">'+numberFormat(totalFinanceVendor)+'</span>');
 			$('[data-toggle="tooltip"]').tooltip();
 		}
 	}

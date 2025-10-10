@@ -517,6 +517,9 @@ if(!window.jQuery){
 			  dataCollectPayment				=	dataFinanceVendor.collectPayment,
 			  newCollectPaymentStatus			=	dataCollectPayment.newCollectPaymentStatus,
 			  collectPaymentTimestampUpdate		=	dataCollectPayment.timestampUpdate,
+			  dataCarRentCost					=	dataFinanceVendor.carRentCost,
+			  newAdditionalCostStatus			=	dataCarRentCost.newAdditionalCostStatus,
+			  carRentCostTimestampUpdate		=	dataCarRentCost.timestampUpdate,
 			  lastApplicationLoadTime			=	localStorage.getItem('lastApplicationLoadTime') * 1;
 			  
 		if(newWithdrawalRequestStatus && withdrawalRequestTimestampUpdate > lastApplicationLoadTime && allowNotifFinance == 1){
@@ -529,9 +532,15 @@ if(!window.jQuery){
 			toastr["info"](dataCollectPayment.newCollectPaymentMessage)
 		}
 		
+		if(newAdditionalCostStatus && carRentCostTimestampUpdate > lastApplicationLoadTime && allowNotifAdditionalCost == 1){
+			notificationSound.play();
+			toastr["info"](dataCarRentCost.newAdditionalCostMessage)
+		}
+		
 		generateTotalWithdrawalVendorRequestElem(dataWithdrawalRequest.newWithdrawalRequestTotal);
 		generateTotalCollectPaymentVendorElem(dataCollectPayment.newCollectPaymentTotal);
-		generateTotalFinanceVendorElem(dataWithdrawalRequest.newWithdrawalRequestTotal, dataCollectPayment.newCollectPaymentTotal);
+		generateTotalCarRentCostVendorElem(dataCarRentCost.newAdditionalCostTotal);
+		generateTotalFinanceVendorElem(dataWithdrawalRequest.newWithdrawalRequestTotal, dataCollectPayment.newCollectPaymentTotal, dataCarRentCost.newAdditionalCostTotal);
 	});
 
 </script>
