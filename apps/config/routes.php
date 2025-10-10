@@ -476,6 +476,7 @@ $route['financeVendor/carRentalFeeCost/getDetailCarRentalCostById']['POST']					
 $route['financeVendor/carRentalFeeCost/uploadCostReceipt']['POST']								= 'FinanceVendor/CarRentalFeeCost/uploadCostReceipt';
 $route['financeVendor/carRentalFeeCost/saveCarCost']['POST']									= 'FinanceVendor/CarRentalFeeCost/saveCarCost';
 $route['financeVendor/carRentalFeeCost/getDataCarRentalAdditionalCost']['POST']					= 'FinanceVendor/CarRentalFeeCost/getDataCarRentalAdditionalCost';
+$route['financeVendor/carRentalFeeCost/getDataScheduleAdditionalCost']['POST']					= 'FinanceVendor/CarRentalFeeCost/getDataScheduleAdditionalCost';
 
 $route['report/agentPaymentBalance/getDataStatsAgentPayment']['POST']							= 'Report/AgentPaymentBalance/getDataStatsAgentPayment';
 
