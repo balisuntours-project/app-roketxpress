@@ -310,7 +310,7 @@ class ModelCarSchedule extends CI_Model {
 							LEFT JOIN t_reservationdetails C ON B.IDRESERVATIONDETAILS = C.IDRESERVATIONDETAILS
 							LEFT JOIN m_driver D ON A.IDDRIVER = D.IDDRIVER
 							LEFT JOIN m_statusprocesscardropoffpickup E ON A.IDSTATUSPROCESSCARDROPOFFPICKUP = E.IDSTATUSPROCESSCARDROPOFFPICKUP
-							WHERE C.IDRESERVATION = '".$idReservation."' AND ".$con_date."
+							WHERE A.JOBTYPE = ".$jobType." AND C.IDRESERVATION = '".$idReservation."' AND ".$con_date."
 							LIMIT 1"
 						);
 		$row		=	$query->row_array();
