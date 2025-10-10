@@ -380,7 +380,7 @@ class ModelCron extends CI_Model {
 		$query		=	$this->db->query($baseQuery);
 		$row		=	$query->row_array();
 		
-		if(isset($row)) return is_null($row['IDCARVENDOR']) || $row['IDCARVENDOR'] == 0 ? false : true;
-		return false;
+		if(isset($row)) return is_null($row['IDCARVENDOR']) || $row['IDCARVENDOR'] == 0 ? true : false;
+		return true;
 	}
 }
