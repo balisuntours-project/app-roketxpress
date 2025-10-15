@@ -616,7 +616,6 @@ class MainOperation extends CI_Model {
 	}
 	
 	public function getTotalUndeterminedSchedule(){
-		
 		$minHourChangeDate	=	$this->getValueSystemSettingVariable(7) * 1;
 		$intHourNow			=	date("H") * 1;
 		$dateTomorrow		=	new DateTime('tomorrow');
@@ -632,12 +631,21 @@ class MainOperation extends CI_Model {
 		$query				=	$this->db->query($baseQuery);
 		$row				=	$query->row_array();
 		
-		if(!$row){
-			return 0;
-		}
-		
-		return $row['TOTALUNDETEMINEDSCHEDULE'];
-		
+		if(!$row) return 0;
+		return $row['TOTALUNDETEMINEDSCHEDULE'];		
+	}
+	
+	public function getTotalUndeterminedScheduleCar(){
+		$baseQuery	=	"SELECT SUM(IF(B.IDRESERVATIONDETAILS IS NULL, 1, 0)) AS TOTALUNSCHEDULEDCAR
+						FROM t_reservationdetails A
+						LEFT JOIN t_schedulecar B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
+						WHERE A.IDCARTYPE != 0 AND A.SCHEDULEDATE >= '".MIN_DATE_CAR_SCHEDULE_COUNTED."'
+						LIMIT 1";
+		$query		=	$this->db->query($baseQuery);
+		$row		=	$query->row_array();
+
+		if(!$row) return 0;
+		return $row['TOTALUNSCHEDULEDCAR'];		
 	}
 	
 	public function getValueSystemSettingVariable($idSystemSettingVariable){

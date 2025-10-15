@@ -362,6 +362,7 @@ if(!window.jQuery){
 	const unprocessedReservation	=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>unprocessedReservation');
 	const unreadThreadReconfirmation=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>unreadThreadReconfirmation');
 	const undeterminedSchedule		=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>undeterminedSchedule');
+	const undeterminedScheduleCar	=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>undeterminedScheduleCar');
 	const unprocessedFinance		=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>unprocessedFinance');
 	const unprocessedFinanceDriver	=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>unprocessedFinanceDriver');
 	const unprocessedFinanceVendor	=	ref(database, '<?=FIREBASE_RTDB_MAINREF_NAME?>unprocessedFinanceVendor');
@@ -439,6 +440,12 @@ if(!window.jQuery){
 			// getDataDriverCalendar();
 			// getDataDayOffRequest();
 		}
+	});
+	
+	onValue(undeterminedScheduleCar, (snapshot) => {
+		const totalUndeterminedScheduleCar	=	snapshot.val();
+
+		generateTotalUndeterminedScheduleCarElem(totalUndeterminedScheduleCar);
 	});
 	
 	onValue(unprocessedFinance, (snapshot) => {

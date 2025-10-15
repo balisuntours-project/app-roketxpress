@@ -159,6 +159,17 @@ function generateTotalUndeterminedScheduleElem(totalUndeterminedSchedule){
 	}
 }
 
+function generateTotalUndeterminedScheduleCarElem(totalUndeterminedScheduleCar) {
+	totalUndeterminedScheduleCar = totalUndeterminedScheduleCar * 1;
+	if ($("#menuSCRC").length > 0) {
+		$("#containerUndeterminedScheduleCar").remove();
+		if (totalUndeterminedScheduleCar > 0) {
+			$("#menuSCRC a").append('<span class="badge badge-warning badge-pill ml-auto mr-4" id="containerUndeterminedScheduleCar" data-toggle="tooltip" data-original-title="Total unscheduled car rent order" data-placement="right">' + numberFormat(totalUndeterminedScheduleCar) + '</span>');
+			$('[data-toggle="tooltip"]').tooltip();
+		}
+	}
+}
+
 function generateTotalReimbursementElem(totalReimbursement){
 	totalReimbursement	=	totalReimbursement * 1;
 	if($("#menuFRBM").length > 0){

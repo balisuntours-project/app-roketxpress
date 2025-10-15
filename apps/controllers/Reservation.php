@@ -5,10 +5,7 @@ require FCPATH . 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use Spipu\Html2Pdf\Html2Pdf;
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Contract\Database;
 
 class Reservation extends CI_controller {
 	
@@ -1350,6 +1347,7 @@ class Reservation extends CI_controller {
 		$statusRsvUpdate		=	$this->getStatusScheduleReservation($idReservation);		
 		$this->MainOperation->updateData("t_reservation", array("STATUS"=>$statusRsvUpdate, $fieldUpdateStatus => "1"), "IDRESERVATION", $idReservation);
 		$this->updateWebappStatisticTags();
+		$this->updateWebappStatisticTagsCarSchedule();
 		$this->processReservationMailRating($idReservation);
 		if(!$arrReservationDetails) setResponseOk(array("token"=>$this->newToken, "msg"=>"Details has been added to reservation", "arrResultInsert"=>$arrResultInsert));
 		if($arrReservationDetails) {
@@ -1842,6 +1840,7 @@ class Reservation extends CI_controller {
 		
 		if(isset($dateSchedule) && $dateSchedule != "") $this->MainOperation->calculateScheduleDriverMonitor($dateSchedule);
 		$this->updateWebappStatisticTags();
+		$this->updateWebappStatisticTagsCarSchedule();
 		$this->processReservationMailRating($idReservation);
 		
 		if(!$arrDataDeleteReservationDetails) setResponseOk(array("token"=>$this->newToken, "msg"=>"Reservation details has been deleted"));
@@ -2979,6 +2978,24 @@ class Reservation extends CI_controller {
 				$database				=	$factory->createDatabase();
 				$database->getReference(FIREBASE_RTDB_MAINREF_NAME."unprocessedReservation")->set($totalUnprocessedReservation);
 				$database->getReference(FIREBASE_RTDB_MAINREF_NAME."undeterminedSchedule")->set($totalUndeterminedSchedule); 
+			} catch (Exception $e) {
+			}
+		}
+		
+		return true;
+	}
+	
+	private function updateWebappStatisticTagsCarSchedule(){
+		if(PRODUCTION_URL){
+			$this->load->model('MainOperation');
+			$totalUndeterminedScheduleCar	=	$this->MainOperation->getTotalUndeterminedScheduleCar();
+
+			try {
+				$factory	=	(new Factory)
+								->withServiceAccount(FIREBASE_PRIVATE_KEY_PATH)
+								->withDatabaseUri(FIREBASE_RTDB_URI);
+				$database	=	$factory->createDatabase();
+				$database->getReference(FIREBASE_RTDB_MAINREF_NAME."undeterminedScheduleCar")->set($totalUndeterminedScheduleCar);
 			} catch (Exception $e) {
 			}
 		}

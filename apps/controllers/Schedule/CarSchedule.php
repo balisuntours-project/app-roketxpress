@@ -1,5 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+use Kreait\Firebase\Factory;
 
 class CarSchedule extends CI_controller {
 	
@@ -32,58 +33,73 @@ class CarSchedule extends CI_controller {
 		$this->load->model('MainOperation');
 		$this->load->model('Schedule/ModelCarSchedule');
 		
-		$month				=	validatePostVar($this->postVar, 'month', true);
-		$year				=	validatePostVar($this->postVar, 'year', true);
 		$idVendorCar		=	validatePostVar($this->postVar, 'idVendorCar', false);
 		$idCarType			=	validatePostVar($this->postVar, 'idCarType', false);
+		$startDate			=	validatePostVar($this->postVar, 'startDate', true);
+		$endDate			=	validatePostVar($this->postVar, 'endDate', true);
 		$searchKeyword		=	validatePostVar($this->postVar, 'searchKeyword', false);
-		$yearMonth			=	$year."-".$month;
-		$firstDate			=	$yearMonth."-01";
-		$firstDateStr		=	date("d-m-Y", strtotime($firstDate));
-		$firstDateTimeStr	=	date("Y-m-d 00:00:00", strtotime($firstDate));
-		$lastDateStr		=	date("t-m-Y", strtotime($firstDate));
-		$totalDays			=	date("t", strtotime($firstDate));
-		$strYearMonth		=	date("M Y", strtotime($firstDate));
+		$startDateDT		=	DateTime::createFromFormat('d-m-Y', $startDate);
+		$startDateFormat	=	$startDateDT->format('Y-m-d');
+		$startDay			=	intval($startDateDT->format('d'));
+		$endDate			=	validatePostVar($this->postVar, 'endDate', true);
+		$endDateDT			=	DateTime::createFromFormat('d-m-Y', $endDate);
+		$endDateFormat		=	$endDateDT->format('Y-m-d');
+		$intervalDate		=	$startDateDT->diff($endDateDT);
+		$daysDifference 	=	$intervalDate->format('%R%a');
+
+		if($daysDifference > 31) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Allowed date range is maximum 31 days"));
+		if($daysDifference < 0) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Invalid date range filter"));
+
+		$firstDateStr		=	$startDateDT->format('d-m-Y');
+		$firstDateTimeStr	=	$startDateFormat." 00:00:00";
+		$lastDateStr		=	$endDateDT->format('d-m-Y');
+		$totalDays			=	$daysDifference;
+
 		$dataCar			=	$this->ModelCarSchedule->getDataCar($idVendorCar, $idCarType, $searchKeyword);
-		$dataStatistic		=	$this->ModelCarSchedule->getDataCarStatistic($yearMonth);
+		$dataStatistic		=	$this->ModelCarSchedule->getDataCarStatistic($startDateFormat, $endDateFormat);
 		$arrDates			=	$arrDataRent	=	array();
 		
-		for($i=1; $i<=$totalDays; $i++){
-			$arrDates[]		=	$i;
-			$arrDataRent[]	=	array();
+		for($i=$startDay; $i<=($startDay + $totalDays); $i++){
+			$arrDates[]			=	$i;
+			$arrDataRent[$i]	=	array();
 		}
 		
-		if(!$dataCar) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No data found", "strYearMonth"=>$strYearMonth, "dataStatistic"=>$dataStatistic, "arrDates"=>$arrDates));
+		if(!$dataCar) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No data found", "dataStatistic"=>$dataStatistic, "arrDates"=>$arrDates));
 
 		foreach($dataCar as $keyCar){
 			$keyCar->DATASCHEDULE	=	$arrDataRent;
 		}
 
-		$dataSchedule	=	$this->ModelCarSchedule->getDataCarSchedule($yearMonth);
+		$dataSchedule	=	$this->ModelCarSchedule->getDataCarSchedule($startDateFormat, $endDateFormat);
 		if($dataSchedule){
 			foreach($dataSchedule as $keySchedule){
-				$idReservationDB=	$keySchedule->IDRESERVATION * 1;
-				$idCarVendorDB	=	$keySchedule->IDCARVENDOR;
-				$timeScheduleDB	=	$keySchedule->RESERVATIONTIMESTART;
-				$idScheduleDB	=	$keySchedule->IDSCHEDULECAR * 1;
-				$dateScheduleDB	=	$keySchedule->SCHEDULEDATE * 1;
-				$bookingCodeDB	=	$keySchedule->BOOKINGCODE;
-				$durationDB		=	$keySchedule->DURATION;
-				$dateTimeStartDB=	$keySchedule->DATETIMESTART;
-				$dateTimeEndDB	=	$keySchedule->DATETIMEEND;
-				$customerNameDB	=	$keySchedule->CUSTOMERNAME;
-				$idxSchedule	=	$dateScheduleDB - 1;
+				$idReservationDB	=	$keySchedule->IDRESERVATION * 1;
+				$idCarVendorDB		=	$keySchedule->IDCARVENDOR;
+				$timeScheduleDB		=	$keySchedule->RESERVATIONTIMESTART;
+				$idScheduleDB		=	$keySchedule->IDSCHEDULECAR * 1;
+				$dateScheduleDB		=	$keySchedule->SCHEDULEDATE * 1;
+				$bookingCodeDB		=	$keySchedule->BOOKINGCODE;
+				$durationDB			=	$keySchedule->DURATION;
+				$dateTimeStartDB	=	$keySchedule->DATETIMESTART;
+				$dateTimeEndDB		=	$keySchedule->DATETIMEEND;
+				$dateScheduleEnd	=	substr($dateTimeEndDB, 0, 10);
+				$dateReservationEnd	=	$keySchedule->RESERVATIONDATEEND;
+				$customerNameDB		=	$keySchedule->CUSTOMERNAME;
+				$idxSchedule		=	$dateScheduleDB;
+				$isPickupSchedule	=	false;
+
+				if($dateScheduleEnd == $dateReservationEnd) $isPickupSchedule	=	true;
 				
 				foreach($dataCar as $keyCar){
 					if($keyCar->IDCARVENDOR == $idCarVendorDB){
-						$keyCar->DATASCHEDULE[$idxSchedule][]	=	array($idScheduleDB, $timeScheduleDB, $idReservationDB, $bookingCodeDB, $durationDB, $dateTimeStartDB, $dateTimeEndDB, $customerNameDB);
+						$keyCar->DATASCHEDULE[$idxSchedule][]	=	array($idScheduleDB, $timeScheduleDB, $idReservationDB, $bookingCodeDB, $durationDB, $dateTimeStartDB, $dateTimeEndDB, $customerNameDB, $isPickupSchedule);
 						break;
 					}
 				}
 			}
 		}
 		
-		$dataDayOff		=	$this->ModelCarSchedule->getDataCarDayOff($yearMonth);
+		$dataDayOff		=	$this->ModelCarSchedule->getDataCarDayOff($startDateFormat, $endDateFormat);
 		if($dataDayOff){
 			foreach($dataDayOff as $keyDayOff){
 				$idCarVendorDB		=	$keyDayOff->IDCARVENDOR;
@@ -95,7 +111,7 @@ class CarSchedule extends CI_controller {
 				$dateTimeStartDB	=	$keyDayOff->DATETIMESTART;
 				$dateTimeEndDB		=	$keyDayOff->DATETIMEEND;
 				$reasonDB			=	$keyDayOff->REASON;
-				$idxSchedule		=	$dateDayOffDB - 1;
+				$idxSchedule		=	$dateDayOffDB;
 				
 				foreach($dataCar as $keyCar){
 					if($keyCar->IDCARVENDOR == $idCarVendorDB){
@@ -110,9 +126,9 @@ class CarSchedule extends CI_controller {
 			array(
 				"token"				=>	$this->newToken,
 				"dataCar"			=>	$dataCar,
-				"strYearMonth"		=>	$strYearMonth,
 				"dataStatistic"		=>	$dataStatistic,
 				"arrDates"			=>	$arrDates,
+				"startDay"			=>	$startDay,
 				"firstDateStr"		=>	$firstDateStr,
 				"firstDateTimeStr"	=>	$firstDateTimeStr,
 				"lastDateStr"		=>	$lastDateStr
@@ -123,20 +139,21 @@ class CarSchedule extends CI_controller {
 	public function getDataReservationSchedule(){
 		$this->load->model('Schedule/ModelCarSchedule');
 		
-		$month			=	validatePostVar($this->postVar, 'month', true);
-		$year			=	validatePostVar($this->postVar, 'year', true);
-		$idSource		=	validatePostVar($this->postVar, 'idSource', false);
-		$dateSchedule	=	validatePostVar($this->postVar, 'dateSchedule', false);
-		$bookingCode	=	validatePostVar($this->postVar, 'bookingCode', false);
-		$searchKeyword	=	validatePostVar($this->postVar, 'searchKeyword', false);
-		$yearMonth		=	$year."-".$month;
+		$month				=	validatePostVar($this->postVar, 'month', true);
+		$year				=	validatePostVar($this->postVar, 'year', true);
+		$idSource			=	validatePostVar($this->postVar, 'idSource', false);
+		$dateSchedule		=	validatePostVar($this->postVar, 'dateSchedule', false);
+		$bookingCode		=	validatePostVar($this->postVar, 'bookingCode', false);
+		$searchKeyword		=	validatePostVar($this->postVar, 'searchKeyword', false);
+		$viewUnscheduledOnly=	validatePostVar($this->postVar, 'viewUnscheduledOnly', false);
+		$yearMonth			=	$year."-".$month;
 		
 		if(isset($dateSchedule) && $dateSchedule != ""){
 			$dateSchedule	=	DateTime::createFromFormat('d-m-Y', $dateSchedule);
 			$dateSchedule	=	$dateSchedule->format('Y-m-d');
 		}
 		
-		$dataTable		=	$this->ModelCarSchedule->getDataReservationSchedule($yearMonth, $idSource, $dateSchedule, $bookingCode, $searchKeyword);
+		$dataTable		=	$this->ModelCarSchedule->getDataReservationSchedule($yearMonth, $idSource, $dateSchedule, $bookingCode, $searchKeyword, $viewUnscheduledOnly);
 	
 		if(!$dataTable) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No data found"));
 		setResponseOk(array("token"=>$this->newToken, "result"=>$dataTable));	
@@ -359,14 +376,13 @@ class CarSchedule extends CI_controller {
 					);
 					$procInsertMsg	=	$this->MainOperation->addData("t_messagepartner", $arrInsertMsg);
 						
-					if($procInsertMsg['status']){
-						if($vendorTokenFCM != "") $this->fcm->sendPushNotification($vendorTokenFCM, $titleMsg, $body, $additionalArray);
-					}
+					if($procInsertMsg['status']) if($vendorTokenFCM != "") $this->fcm->sendPushNotification($vendorTokenFCM, $titleMsg, $body, $additionalArray);
 				}
 				$totalInsertSchedule++;
 			}
 		}
-		
+
+		$this->updateWebappStatisticTagsCarSchedule();
 		if($totalInsertSchedule > 0){
 			if(!$arrDataCarSchedule) setResponseOk(array("token"=>$this->newToken, "msg"=>$totalInsertSchedule." reservation schedule(s) have been added to the vendor car : ".$vendorCarName));
 			if($arrDataCarSchedule) return [
@@ -426,6 +442,22 @@ class CarSchedule extends CI_controller {
 		} else {
 			setResponseInternalServerError(array("msg"=>$resultDeleteCarSchedule['msg']));
 		}
+	}
+
+	public function deleteAllCarSchedule(){
+		$this->load->model('Schedule/ModelCarSchedule');
+		$idReservation	=	validatePostVar($this->postVar, 'idData', true);
+
+		if($idReservation <= 0) setResponseForbidden(array("token"=>$this->newToken, "msg"=>"Invalid reservation data"));
+		$dataAllScheduleCar	=	$this->ModelCarSchedule->getDataAllScheduleCar($idReservation);
+		if(!$dataAllScheduleCar) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"No schedule data found for selected reservation"));
+
+		foreach($dataAllScheduleCar as $keySchedule){
+			$idScheduleCar	=	$keySchedule->IDSCHEDULECAR * 1;
+			$this->deleteCarSchedule(['idCarSchedule'=>$idScheduleCar]);
+		}
+
+		setResponseOk(array("token"=>$this->newToken, "msg"=>"All car schedule has been deleted"));
 	}
 	
 	public function addCarDayOff(){
@@ -645,22 +677,20 @@ class CarSchedule extends CI_controller {
 								);
 			
 			$arrInsertMsg	=	array(
-										"IDMESSAGEPARTNERTYPE"	=>	3,
-										"IDPARTNERTYPE"			=>	2,
-										"IDPARTNER"				=>	$idVendor,
-										"IDPRIMARY"				=>	$idCarSchedule,
-										"TITLE"					=>	$titleDB,
-										"MESSAGE"				=>	$body,
-										"DATETIMEINSERT"		=>	date('Y-m-d H:i:s')
-								);
+					"IDMESSAGEPARTNERTYPE"	=>	3,
+					"IDPARTNERTYPE"			=>	2,
+					"IDPARTNER"				=>	$idVendor,
+					"IDPRIMARY"				=>	$idCarSchedule,
+					"TITLE"					=>	$titleDB,
+					"MESSAGE"				=>	$body,
+					"DATETIMEINSERT"		=>	date('Y-m-d H:i:s')
+			);
 			$procInsertMsg	=	$this->MainOperation->addData("t_messagepartner", $arrInsertMsg);
 				
-			if($procInsertMsg['status']){
-				if($vendorTokenFCM != "") $this->fcm->sendPushNotification($vendorTokenFCM, $titleMsg, $body, $additionalArray);
-			}
-		
+			if($procInsertMsg['status']) if($vendorTokenFCM != "") $this->fcm->sendPushNotification($vendorTokenFCM, $titleMsg, $body, $additionalArray);		
 		}
 		
+		$this->updateWebappStatisticTagsCarSchedule();
 		if(!$arrDataDeleteSchedule) setResponseOk(array("token"=>$this->newToken, "msg"=>"Rent car schedule has been deleted"));
 		if($arrDataDeleteSchedule) return [
 			"isSuccess"	=>	true,
@@ -676,7 +706,9 @@ class CarSchedule extends CI_controller {
 		$detailData				=	$this->ModelCarSchedule->getDetailSchedule($idCarSchedule, $idReservationDetails);
 		
 		if(!$detailData) setResponseNotFound(array("token"=>$this->newToken, "msg"=>"Detail not found"));
-		setResponseOk(array("token"=>$this->newToken, "detailData"=>$detailData));	
+		$idReservation		=	$detailData['IDRESERVATION'];
+		$dataAllScheduleCar	=	$this->ModelCarSchedule->getDataAllScheduleCar($idReservation);
+		setResponseOk(array("token"=>$this->newToken, "detailData"=>$detailData, "dataAllScheduleCar"=>$dataAllScheduleCar));	
 	}
 	
 	public function getDetailDayOff(){
@@ -806,5 +838,23 @@ class CarSchedule extends CI_controller {
 		}
 
 		setResponseOk(array("token"=>$this->newToken, "msg"=>"Drop Off / Pick Up schedule has been saved"));
+	}
+	
+	private function updateWebappStatisticTagsCarSchedule(){
+		// if(PRODUCTION_URL){
+			$this->load->model('MainOperation');
+			$totalUndeterminedScheduleCar	=	$this->MainOperation->getTotalUndeterminedScheduleCar();
+
+			try {
+				$factory	=	(new Factory)
+								->withServiceAccount(FIREBASE_PRIVATE_KEY_PATH)
+								->withDatabaseUri(FIREBASE_RTDB_URI);
+				$database	=	$factory->createDatabase();
+				$database->getReference(FIREBASE_RTDB_MAINREF_NAME."undeterminedScheduleCar")->set($totalUndeterminedScheduleCar);
+			} catch (Exception $e) {
+			}
+		// }
+		
+		return true;
 	}
 }

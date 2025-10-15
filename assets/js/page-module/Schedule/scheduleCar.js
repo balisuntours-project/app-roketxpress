@@ -3,10 +3,10 @@ var $confirmDeleteDialog= $('#modal-confirm-action');
 if (scheduleCarFunc == null){
 	var scheduleCarFunc	=	function(){
 		$(document).ready(function () {
-			setOptionHelper('optionMonth', 'optionMonth', thisMonth, false);
-			setOptionHelper('optionYear', 'optionYear', false, false);
 			setOptionHelper('calendarTab-optionVendorCar', 'dataVendorCar');
 			setOptionHelper('calendarTab-optionCarType', 'dataCarType');
+			setOptionHelper('reservationTab-optionMonth', 'optionMonth', thisMonth, false);
+			setOptionHelper('reservationTab-optionYear', 'optionYear', false, false);
 			setOptionHelper('reservationTab-optionSource', 'dataSource');
 			setOptionHelper('addCarDayOff-optionType', 'dataCarDayOffType');
 			setOptionHelper('addCarDayOff-hourStart', 'dataHours');
@@ -28,43 +28,13 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 
 	switch (activeTabId) {
 		case '#calendarTab'		: getCarSchedule(); break;
-		case '#reservationTab'	: 
-			var callbackFunc = null;
-			if(localStorage.getItem('OSNotificationData') === null || localStorage.getItem('OSNotificationData') === undefined){
-				setOptionHelper('optionMonth', 'optionMonth', thisMonth, false);
-				setOptionHelper('optionYear', 'optionYear', false, false);
-			} else {
-				var OSNotificationData	=	JSON.parse(localStorage.getItem('OSNotificationData'));
-				var OSNotifType			=	OSNotificationData.type;
-				var OSNotifMonth		=	OSNotificationData.month;
-				var OSNotifYear			=	OSNotificationData.year;
-
-				setOptionHelper('optionMonth', 'optionMonth', OSNotifMonth, false);
-				setOptionHelper('optionYear', 'optionYear', OSNotifYear, false);
-
-				if(OSNotifType == "carschedule"){
-					idReservationDetails=	OSNotificationData.idReservationDetails;
-					$('.nav-tabs a[href="#reservationTab"]').tab('show');
-					callbackFunc		=	function(){
-						$('.addCarBtn[data-idreservationdetails='+idReservationDetails+']').trigger("click");
-					}
-					localStorage.removeItem("OSNotificationData");
-				}	
-			}
-			getDataReservationSchedule(callbackFunc);
-			break;
+		case '#reservationTab'	: getDataReservationSchedule(); break;
 		case '#dropOffPickUpTab': getDataDropOffPickUpSchedule(); break;
 	}
 });
 
-$('#optionMonth, #optionYear').off('change');
-$('#optionMonth, #optionYear').on('change', function(e) {
-	getCarSchedule();
-	getDataReservationSchedule();
-});
-
-$('#calendarTab-optionVendorCar, #calendarTab-optionCarType').off('change');
-$('#calendarTab-optionVendorCar, #calendarTab-optionCarType').on('change', function(e) {
+$('#calendarTab-startDate, #calendarTab-endDate, #calendarTab-optionVendorCar, #calendarTab-optionCarType').off('change');
+$('#calendarTab-startDate, #calendarTab-endDate, #calendarTab-optionVendorCar, #calendarTab-optionCarType').on('change', function(e) {
 	getCarSchedule();
 });
 
@@ -80,12 +50,16 @@ function getCarSchedule(){
 		columnNumber	=	1,
 		month			=	$('#optionMonth').val(),
 		year			=	$('#optionYear').val(),
+		startDate		=	$('#calendarTab-startDate').val(),
+		endDate			=	$('#calendarTab-endDate').val(),
 		idVendorCar		=	$('#calendarTab-optionVendorCar').val(),
 		idCarType		=	$('#calendarTab-optionCarType').val(),
 		searchKeyword	=	$('#calendarTab-searchKeyword').val(),
 		dataSend		=	{
 			idVendorCar:idVendorCar,
 			idCarType:idCarType,
+			startDate: startDate,
+			endDate: endDate,
 			searchKeyword:searchKeyword,
 			month:month,
 			year:year
@@ -107,36 +81,36 @@ function getCarSchedule(){
 			NProgress.done();
 			setUserToken(response);
 			
-			var dataStatistic	=	response.dataStatistic,
-				arrDates		=	response.arrDates,
-				firstDateStr	=	response.firstDateStr,
-				lastDateStr		=	response.lastDateStr,
-				rows			=	thHeaderDates	=	strInfoTotalReservation	=	"",
+			var rows			=	thHeaderDates	=	strInfoTotalReservation	=	"",
 				arrVendor		=	[],
 				colspanPerDate	=	24;
-			columnNumber		=	columnNumber + arrDates.length;
-			
-			$('#scheduleDateStartFilter').val(firstDateStr);
-			$('#scheduleDateEndFilter').val(lastDateStr);
-			
-			if(dataStatistic['TOTALRESERVATION'] <= 0){
-				strInfoTotalReservation	=	"There are no unscheduled reservations for the selected period ("+response.strYearMonth+")";
+			if (response.status != 200) {
+				rows = "<tr><td colspan='" + (columnNumber * colspanPerDate) + "'><center>" + response.msg + "</center></td></tr>";
+				$("#totalScheduleInfo").html("There are no unscheduled reservations for the selected period");
 			} else {
-				strInfoTotalReservation	=	"Total reservations : <b>"+dataStatistic['TOTALRESERVATION']+"</b>. Unscheduled reservations : <b>"+dataStatistic['TOTALRESERVATIONUNSCHEDULED']+"</b>";
-			}
-			
-			$("#totalScheduleInfo").html(strInfoTotalReservation);
+				var dataStatistic	=	response.dataStatistic,
+					arrDates		=	response.arrDates,
+					firstDateStr	=	response.firstDateStr,
+					lastDateStr		=	response.lastDateStr;
+				columnNumber		=	columnNumber + arrDates.length;
 				
-			for(var iDates=0; iDates<arrDates.length; iDates++){
-				thHeaderDates	+=	'<th colspan="'+colspanPerDate+'" class="thHeaderDates text-center px-0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; '+arrDates[iDates]+' &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</th>';
-			}
-			
-			$("#headerDates").append(thHeaderDates);
-			
-			if(response.status != 200){
-				rows		=	"<tr><td colspan='"+(columnNumber * colspanPerDate)+"'><center>No data found</center></td></tr>";
-			} else {
+				$('#scheduleDateStartFilter').val(firstDateStr);
+				$('#scheduleDateEndFilter').val(lastDateStr);
 				
+				if(dataStatistic['TOTALRESERVATION'] <= 0){
+					strInfoTotalReservation	=	"There are no unscheduled reservations for the selected period";
+				} else {
+					strInfoTotalReservation	=	"Total reservations : <b>"+dataStatistic['TOTALRESERVATION']+"</b>. Unscheduled reservations : <b>"+dataStatistic['TOTALRESERVATIONUNSCHEDULED']+"</b>";
+				}
+				
+				$("#totalScheduleInfo").html(strInfoTotalReservation);
+					
+				for(var iDates=0; iDates<arrDates.length; iDates++){
+					thHeaderDates	+=	'<th colspan="'+colspanPerDate+'" class="thHeaderDates text-center px-0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; '+arrDates[iDates]+' &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</th>';
+				}
+				
+				$("#headerDates").append(thHeaderDates);
+			
 				var data			=	response.dataCar,
 					firstDateTimeStr=	response.firstDateTimeStr;
 				$.each(data, function(index, array) {
@@ -168,10 +142,11 @@ function getCarSchedule(){
 						currentDateTimeCheck=	firstDateTimeStr;
 						
 					$.each(dataSchedule, function(iSchedule, arrSchedule) {
-						let btnDefaultClass		=	"button button-xs btn-block btnSchedule text-left px-1 mr-0";
-							
+						let btnDefaultClass	=	"button button-xs btn-block btnSchedule text-left px-1 mr-0",
+							startDay		=	parseInt(response.startDay);
+						
 						if(arrSchedule.length > 0){
-							for(var iChildSch=0; iChildSch<arrSchedule.length; iChildSch++){
+							for (var iChildSch = 0; iChildSch < arrSchedule.length; iChildSch++){
 								let btnSchedule		=	"",
 									colspanTd		=	6,
 									classRadiusLeft	=	classRadiusRight	=	'',
@@ -185,6 +160,8 @@ function getCarSchedule(){
 									dateTimeStart			=	arrSchedule[iChildSch][5],
 									dateTimeEnd				=	arrSchedule[iChildSch][6],
 									customerName			=	arrSchedule[iChildSch][7],
+									isPickUpSchedule		=	arrSchedule[iChildSch][8],
+									pickUpTagClass			=	isPickUpSchedule == true ? 'border-right-pickup-car' : '',
 									hourStart				=	parseInt(timeStart.substring(0, 2)),
 									diffHourWithCurrDTCheck	=	getDiffDateTime(currentDateTimeCheck, dateTimeStart);
 
@@ -225,6 +202,7 @@ function getCarSchedule(){
 								}
 								
 								//next idReservation
+								iSchedule	=	iSchedule * 1;
 								if(dataSchedule[iSchedule][(iChildSch + 1)] !== undefined && dataSchedule[iSchedule][(iChildSch + 1)].length != 0){
 									idReservationNext	=	dataSchedule[iSchedule][(iChildSch + 1)][2];
 								} else {
@@ -251,9 +229,6 @@ function getCarSchedule(){
 									onclickFunction		=	'onclick="showModalDetailDayOff('+idReservationDayOff+')"';
 								}
 								
-								// console.log(idReservationCurrent+" == "+idReservationPrevious);
-								// console.log(idReservationCurrent+" == "+idReservationNext);
-								
 								if(idReservationCurrent == idReservationPrevious || idCarSchedule == idCarSchedulePrevious) classRadiusLeft	=	'border-top-left-0 border-bottom-left-0';
 								if(idReservationCurrent == idReservationNext || idCarSchedule == idCarScheduleNext) classRadiusRight	=	'border-top-right-0 border-bottom-right-0';
 
@@ -272,12 +247,12 @@ function getCarSchedule(){
 								}
 								
 								colspanTd			=	duration;
-								btnSchedule			=	'<button class="'+btnDefaultClass+' sch-'+duration+'-hours button-'+badgeName+' '+classRadiusLeft+' '+classRadiusRight+'" '+onclickFunction+'>'+contentBtnSchedule+'</button>';
+								btnSchedule			=	'<button class="'+btnDefaultClass+' sch-'+duration+'-hours button-'+badgeName+' '+classRadiusLeft+' '+classRadiusRight+' '+pickUpTagClass+'" '+onclickFunction+'>'+contentBtnSchedule+'</button>';
 								currentDateTimeCheck=	addHoursToDateTime(currentDateTimeCheck, duration);
 								rows	+=	'<td class="px-0 align-middle" colspan="'+colspanTd+'">'+btnSchedule+'</td>';
 							}
 						} else {
-							let totalHoursByIndexDate	=	(iSchedule + 1) * 24,
+							let totalHoursByIndexDate	=	(iSchedule - startDay + 1) * 24,
 								datetimeCurrentByIndex	=	addHoursToDateTime(firstDateTimeStr, totalHoursByIndexDate),
 								diffHourWithCurrDTCheck	=	parseInt(getDiffDateTime(currentDateTimeCheck, datetimeCurrentByIndex));
 							
@@ -327,8 +302,8 @@ function addHoursToDateTime(dateTime, nHour){
 	return newDatetime.format('YYYY-MM-DD HH:mm:ss');
 }
 
-$('#reservationTab-optionSource').off('change');
-$('#reservationTab-optionSource').on('change', function(e) {
+$('#reservationTab-optionSource, #reservationTab-optionMonth, #reservationTab-optionYear').off('change');
+$('#reservationTab-optionSource, #reservationTab-optionMonth, #reservationTab-optionYear').on('change', function(e) {
 	getDataReservationSchedule();
 });
 
@@ -345,20 +320,35 @@ $("#reservationTab-bookingCode, #reservationTab-searchKeyword").on('keypress',fu
     }
 });
 
+$('#reservationTab-cbShowUnscheduledOnly').off('click');
+$("#reservationTab-cbShowUnscheduledOnly").on('click', function (e) {
+	var checked = $("#reservationTab-cbShowUnscheduledOnly").is(':checked');
+
+	if (checked) {
+		$("#reservationTab-optionMonth, #reservationTab-optionYear, #reservationTab-dateSchedule").attr("disabled", true);
+	} else {
+		$("#reservationTab-optionMonth, #reservationTab-optionYear, #reservationTab-dateSchedule").attr("disabled", false);
+	}
+
+	getDataReservationSchedule();
+});
+
 function getDataReservationSchedule(callbackFunc = null){
-	var month			=	$('#optionMonth').val(),
-		year			=	$('#optionYear').val(),
-		idSource		=	$('#reservationTab-optionSource').val(),
-		dateSchedule	=	$('#reservationTab-dateSchedule').val(),
-		bookingCode		=	$('#reservationTab-bookingCode').val(),
-		searchKeyword	=	$('#reservationTab-searchKeyword').val(),
-		dataSend		=	{
+	var month				=	$('#reservationTab-optionMonth').val(),
+		year				=	$('#reservationTab-optionYear').val(),
+		idSource			=	$('#reservationTab-optionSource').val(),
+		dateSchedule		=	$('#reservationTab-dateSchedule').val(),
+		bookingCode			=	$('#reservationTab-bookingCode').val(),
+		searchKeyword		=	$('#reservationTab-searchKeyword').val(),
+		viewUnscheduledOnly	=	$("#reservationTab-cbShowUnscheduledOnly").is(':checked'),
+		dataSend			=	{
 			month:month,
 			year:year,
 			idSource:idSource,
 			dateSchedule:dateSchedule,
 			bookingCode:bookingCode,
-			searchKeyword:searchKeyword
+			searchKeyword:searchKeyword,
+			viewUnscheduledOnly: viewUnscheduledOnly
 		};
 	
 	$.ajax({
@@ -379,15 +369,12 @@ function getDataReservationSchedule(callbackFunc = null){
 			setUserToken(response);
 			$("#spinnerLoadData").remove();
 			
-			var data			=	response.result,
-				rows			=	"";
-				
 			if(response.status != 200){
 				$("#noDataTableReservationSchedule").removeClass("d-none");
 			} else {
-				
-				var elemTableReservation=	"";
-				$.each(response.result, function(index, array) {
+				var data				=	response.result,
+					elemTableReservation=	"";
+				$.each(data, function(index, array) {
 					var badgeCarDuration	=	'<span class="badge badge-primary pull-right">'+array.DURATION+' hours</span>',
 						btnAddCar			=	btnRemoveCar	=	strCarName	=	strCarNameDelete	=	"",
 						rsvText				=	array.PRODUCTNAME+'<br/>'+array.CUSTOMERNAME,
@@ -862,14 +849,16 @@ function showModalDetailSchedule(idCarSchedule, idReservationDetails){
 			setUserToken(response);
 			
 			if(response.status == 200){
-				var detailData	=	response.detailData,
-					carDetails	=	detailData.IDSCHEDULECAR == '' || detailData.IDSCHEDULECAR == null ? 'Not Set' : detailData.CARDETAIL;
+				var detailData			=	response.detailData,
+					dataAllScheduleCar	=	response.dataAllScheduleCar,
+					carDetails			=	detailData.IDSCHEDULECAR == '' || detailData.IDSCHEDULECAR == null ? 'Not Set' : detailData.CARDETAIL;
 
 				$("#detailSchedule-productName").html(detailData.PRODUCTNAME);
 				$("#detailSchedule-carDuration").html(detailData.DURATION+" Hours");
 				$("#detailSchedule-notes").html(detailData.NOTES);
 				
 				$("#detailSchedule-source").html(detailData.SOURCENAME);
+				$("#detailSchedule-bookingCode").html(detailData.BOOKINGCODE);
 				$("#detailSchedule-title").html(detailData.RESERVATIONTITLE);
 				$("#detailSchedule-dateTimeStart").html(detailData.DATETIMESTART);
 				$("#detailSchedule-dateTimeEnd").html(detailData.DATETIMEEND);
@@ -895,6 +884,18 @@ function showModalDetailSchedule(idCarSchedule, idReservationDetails){
 					$("#removeScheduleCar").attr("data-idScheduleCar", 0).attr("data-detailCarVendor", "").attr("data-detailReservation", "");
 					$("#removeScheduleCar").addClass('d-none');
 				}
+
+				if (dataAllScheduleCar && dataAllScheduleCar.length > 1) {
+					$("#removeAllScheduleCar").attr("data-idReservation", detailData.IDRESERVATION);
+					$("#removeAllScheduleCar").attr("data-detailCarVendor", detailData.CARDETAIL);
+					$("#removeAllScheduleCar").attr("data-detailReservation", "[" + detailData.BOOKINGCODE + "] " + detailData.RESERVATIONTITLE + ". Customer : " + detailData.CUSTOMERNAME);
+					$("#removeAllScheduleCar").attr("data-detailDateSchedule", dataAllScheduleCar[0].SCHEDULEDATE+" to " + dataAllScheduleCar[dataAllScheduleCar.length - 1].SCHEDULEDATE);
+					$("#removeAllScheduleCar").removeClass('d-none');
+					$("#detailSchedule-allScheduleNumber").html(dataAllScheduleCar.length);
+				} else {
+					$("#removeAllScheduleCar").attr("data-idReservation", 0).attr("data-detailCarVendor", '').addClass('d-none');
+					$("#detailSchedule-allScheduleNumber").html(0);
+				}
 				
 				$('#modal-detailSchedule').modal('show');
 			} else {
@@ -912,10 +913,27 @@ $('#removeScheduleCar').on('click', function(e) {
 	var carDetail			=	$(this).attr("data-detailCarVendor");
 	var detailReservation	=	$(this).attr("data-detailReservation");
 	var idScheduleCar		=	$(this).attr("data-idScheduleCar");
-	var confirmText			=	'Rent car schedule will be deleted. Details ;<br/><br/>Car Details : <br/><b>'+carDetail+'</b><br/>Reservation : <br/><b>'+detailReservation+'</b>.<br/><br/>Are you sure?';
+	var confirmText			=	'Rent car schedule will be deleted. Details ;<br/><br/>"+Car Details : <br/><b>'+carDetail+'</b><br/>Reservation : <br/><b>'+detailReservation+'</b>.<br/><br/>Are you sure?';
 		
 	$confirmDeleteDialog.find('#modal-confirm-body').html(confirmText);
 	$confirmDeleteDialog.find('#confirmBtn').attr('data-idData', idScheduleCar).attr('data-function', "deleteCarSchedule");
+	$confirmDeleteDialog.modal('show');
+});
+
+$('#removeAllScheduleCar').off('click');
+$('#removeAllScheduleCar').on('click', function (e) {
+	var carDetail			=	$(this).attr("data-detailCarVendor");
+	var detailReservation	=	$(this).attr("data-detailReservation");
+	var detailDateSchedule	=	$(this).attr("data-detailDateSchedule");
+	var idReservation		=	$(this).attr("data-idReservation");
+	var confirmText			=	'Rent car schedule will be deleted. Details ;<br/><br/>'+
+								'Car Details : <br/><b class="mb-2">'+carDetail+'</b><br/><br/>'+
+								'Reservation : <br/><b class="mb-2">'+detailReservation+'</b>.<br/><br/>'+
+								'Date Schedule : <br/><b>'+detailDateSchedule+'</b>.<br/><br/>'+
+								'Are you sure?';
+
+	$confirmDeleteDialog.find('#modal-confirm-body').html(confirmText);
+	$confirmDeleteDialog.find('#confirmBtn').attr('data-idData', idReservation).attr('data-function', "deleteAllCarSchedule");
 	$confirmDeleteDialog.modal('show');
 });
 

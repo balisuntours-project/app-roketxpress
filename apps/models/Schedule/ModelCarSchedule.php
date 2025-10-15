@@ -25,14 +25,14 @@ class ModelCarSchedule extends CI_Model {
 		return $result;
 	}
 	
-	public function getDataCarStatistic($yearMonth){
+	public function getDataCarStatistic($startDate, $endDate){
 		$baseQuery	=	sprintf(
 							"SELECT COUNT(A.IDRESERVATIONDETAILS) AS TOTALRESERVATION,
 									SUM(IF(C.IDRESERVATIONDETAILS IS NULL, 1, 0)) AS TOTALRESERVATIONUNSCHEDULED
 							FROM t_reservationdetails A
 							LEFT JOIN t_reservation B ON A.IDRESERVATION = B.IDRESERVATION
 							LEFT JOIN t_schedulecar C ON A.IDRESERVATIONDETAILS = C.IDRESERVATIONDETAILS
-							WHERE LEFT(A.SCHEDULEDATE, 7) = '".$yearMonth."' AND A.IDCARTYPE != 0
+							WHERE DATE(A.SCHEDULEDATE) BETWEEN '".$startDate."' AND '".$endDate."' AND A.IDCARTYPE != 0
 							GROUP BY LEFT(A.SCHEDULEDATE, 7)"
 						);
 		$query		=	$this->db->query($baseQuery);
@@ -95,14 +95,15 @@ class ModelCarSchedule extends CI_Model {
 		return $result;		
 	}
 	
-	public function getDataCarSchedule($yearMonth){
+	public function getDataCarSchedule($startDate, $endDate){
 		$baseQuery	=	sprintf(
 							"SELECT A.IDCARVENDOR, RIGHT(DATE(A.DATETIMESTART), 2) AS SCHEDULEDATE, LEFT(TIME(A.DATETIMESTART), 5) AS RESERVATIONTIMESTART,
-									A.IDSCHEDULECAR, B.IDRESERVATION, C.BOOKINGCODE, B.DURATION, A.DATETIMESTART, A.DATETIMEEND, C.CUSTOMERNAME
+									A.IDSCHEDULECAR, B.IDRESERVATION, C.BOOKINGCODE, B.DURATION, A.DATETIMESTART, A.DATETIMEEND, C.CUSTOMERNAME,
+									C.RESERVATIONDATEEND
 							FROM t_schedulecar A
 							LEFT JOIN t_reservationdetails B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
 							LEFT JOIN t_reservation C ON B.IDRESERVATION = C.IDRESERVATION
-							WHERE LEFT(A.DATETIMESTART, 7) = '".$yearMonth."'
+							WHERE DATE(A.DATETIMESTART) BETWEEN '".$startDate."' AND '".$endDate."'
 							ORDER BY A.IDCARVENDOR, B.SCHEDULEDATE, A.DATETIMESTART, B.IDRESERVATION"
 						);
 		$query		=	$this->db->query($baseQuery);
@@ -112,12 +113,12 @@ class ModelCarSchedule extends CI_Model {
 		return $result;		
 	}
 	
-	public function getDataCarDayOff($yearMonth){
+	public function getDataCarDayOff($startDate, $endDate){
 		$baseQuery	=	"SELECT A.IDCARVENDOR, DATE_FORMAT(B.DATETIMESTART, '%H:%i') AS TIMESTART, RIGHT(A.DATEDAYOFF, 2) AS DAYOFFDATE, A.IDDAYOFF, B.DURATIONHOUR, C.DAYOFFTYPE, B.DATETIMESTART, B.DATETIMEEND, A.REASON
 						FROM t_dayoff A
 						LEFT JOIN t_dayoffcardetail B ON A.IDDAYOFF = B.IDDAYOFF
 						LEFT JOIN m_cardayofftype C ON B.IDCARDAYOFFTYPE = C.IDCARDAYOFFTYPE
-						WHERE LEFT(A.DATEDAYOFF, 7) = '".$yearMonth."' AND A.IDCARVENDOR != 0
+						WHERE DATE(A.DATEDAYOFF) BETWEEN '".$startDate."' AND '".$endDate."' AND A.IDCARVENDOR != 0
 						ORDER BY A.IDCARVENDOR, A.DATEDAYOFF";
 		$query		=	$this->db->query($baseQuery);
 		$result		=	$query->result();
@@ -126,9 +127,17 @@ class ModelCarSchedule extends CI_Model {
 		return $result;		
 	}
 	
-	public function getDataReservationSchedule($yearMonth, $idSource, $dateSchedule, $bookingCode, $searchKeyword){
+	public function getDataReservationSchedule($yearMonth, $idSource, $dateSchedule, $bookingCode, $searchKeyword, $viewUnscheduledOnly){
+		$con_dateSchedule		=	isset($dateSchedule) && $dateSchedule != "" ? "A.SCHEDULEDATE = '".$dateSchedule."'" : "1=1";
+		$con_yearMonth			=	isset($yearMonth) && $yearMonth != "" ? "LEFT(A.SCHEDULEDATE, 7) = '".$yearMonth."'" : "1=1";
+		$con_viewUnscheduledOnly=	$viewUnscheduledOnly ? "E.IDSCHEDULECAR IS NULL AND A.SCHEDULEDATE >= '".MIN_DATE_CAR_SCHEDULE_COUNTED."'" : "1=1";
+
+		if($viewUnscheduledOnly){
+			$con_dateSchedule	=	"1=1";
+			$con_yearMonth		=	"1=1";
+		}
+
 		$con_idSource		=	isset($idSource) && $idSource != "" ? "C.IDSOURCE = ".$idSource : "1=1";
-		$con_dateSchedule	=	isset($dateSchedule) && $dateSchedule != "" ? "A.SCHEDULEDATE = '".$dateSchedule."'" : "1=1";
 		$con_bookingCode	=	isset($bookingCode) && $bookingCode != "" ? "C.BOOKINGCODE LIKE '%".$bookingCode."%'" : "1=1";
 		$con_searchKeyword	=	isset($searchKeyword) && $searchKeyword != "" ? "(C.CUSTOMERNAME LIKE '%".$searchKeyword."%' OR C.RESERVATIONTITLE LIKE '%".$searchKeyword."%' OR A.PRODUCTNAME LIKE '%".$searchKeyword."%' OR A.NOTES LIKE '%".$searchKeyword."%')" : "1=1";
 		$baseQuery			=	"SELECT A.IDRESERVATIONDETAILS, LEFT(C.RESERVATIONTIMESTART, 5) AS RESERVATIONTIMESTART, B.PRODUCTTYPE, C.RESERVATIONTITLE, A.PRODUCTNAME, A.NOTES,
@@ -144,7 +153,7 @@ class ModelCarSchedule extends CI_Model {
 								LEFT JOIN t_carvendor F ON E.IDCARVENDOR = F.IDCARVENDOR
 								LEFT JOIN m_vendor G ON F.IDVENDOR = G.IDVENDOR
 								LEFT JOIN m_source H ON C.IDSOURCE = H.IDSOURCE
-								WHERE LEFT(A.SCHEDULEDATE, 7) = '".$yearMonth."' AND A.IDCARTYPE != 0 AND ".$con_idSource." AND ".$con_dateSchedule." AND ".$con_bookingCode." AND ".$con_searchKeyword."
+								WHERE ".$con_viewUnscheduledOnly." AND ".$con_yearMonth." AND A.IDCARTYPE != 0 AND ".$con_idSource." AND ".$con_dateSchedule." AND ".$con_bookingCode." AND ".$con_searchKeyword."
 								GROUP BY A.IDRESERVATIONDETAILS
 								ORDER BY A.SCHEDULEDATE, C.RESERVATIONTIMESTART, C.CUSTOMERNAME";
 		$query				=	$this->db->query($baseQuery);
@@ -211,7 +220,7 @@ class ModelCarSchedule extends CI_Model {
 	public function getDetailSchedule($idCarSchedule, $idReservationDetails){
 		$condition	=	isset($idCarSchedule) && $idCarSchedule != 0 && $idCarSchedule != "" ? "C.IDSCHEDULECAR = '".$idCarSchedule."'" : "B.IDRESERVATIONDETAILS = '".$idReservationDetails."'";
 		$query		=	$this->db->query(
-							"SELECT C.IDSCHEDULECAR, B.DURATION, B.PRODUCTNAME, B.NOTES, B.SCHEDULEDATE AS SCHEDULEDATEDB, D.SOURCENAME, A.RESERVATIONTITLE,
+							"SELECT C.IDSCHEDULECAR, B.DURATION, B.PRODUCTNAME, B.NOTES, B.SCHEDULEDATE AS SCHEDULEDATEDB, D.SOURCENAME, A.BOOKINGCODE, A.RESERVATIONTITLE,
 									DATE_FORMAT(B.SCHEDULEDATE, '%d %M %Y') AS SCHEDULEDATE, SUBSTRING(A.RESERVATIONTIMESTART, 1, 5) AS RESERVATIONTIMESTART,
 									A.CUSTOMERNAME, A.CUSTOMERCONTACT, IF(A.CUSTOMEREMAIL IS NULL OR A.CUSTOMEREMAIL = '', '-', A.CUSTOMEREMAIL) AS CUSTOMEREMAIL,
 									IF(A.HOTELNAME IS NULL OR A.HOTELNAME = '', '-', A.HOTELNAME) AS HOTELNAME,
@@ -233,6 +242,20 @@ class ModelCarSchedule extends CI_Model {
 		$row		=	$query->row_array();
 
 		if(isset($row)) return $row;
+		return false;		
+	}
+
+	public function getDataAllScheduleCar($idReservation){
+		$query	=	$this->db->query(
+						"SELECT A.IDSCHEDULECAR, DATE_FORMAT(B.SCHEDULEDATE, '%d %M %Y') AS SCHEDULEDATE
+						FROM t_schedulecar A
+						LEFT JOIN t_reservationdetails B ON A.IDRESERVATIONDETAILS = B.IDRESERVATIONDETAILS
+						WHERE B.IDRESERVATION = ".$idReservation."
+						ORDER BY A.DATETIMESTART"
+					);
+		$result	=	$query->result();
+
+		if(isset($result)) return $result;
 		return false;		
 	}
 

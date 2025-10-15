@@ -1,27 +1,12 @@
-<script>
-	var thisMonth	=	"<?=$thisMonth?>";
-</script>
 <div class="row justify-content-between align-items-center">
 	<div class="col-12 col-lg-auto">
 		<div class="page-heading">
 			<h3 class="title">Car Schedule <span> / List of car schedule per month</span></h3>
 		</div>
 	</div>
-	<div class="col-12 col-lg-auto">
-		<div class="page-date-range">
-			<div class="form-group mr-10">
-				<label for="optionMonth" class="control-label">Schedule Period</label>
-				<select class="form-control" id="optionMonth" name="optionMonth"></select>
-			</div>
-			<div class="form-group">
-				<label for="optionYear" class="control-label">.</label>
-				<select class="form-control" id="optionYear" name="optionYear"></select>
-			</div>
-		</div>
-	</div>
 </div>
 <div class="row justify-content-between align-items-center">
-	<div class="col-12 mb-10">
+	<div class="col-12 mt-15 mb-10">
 		<div class="alert alert-primary" role="alert">
 			<i class="zmdi zmdi-info"></i> <span id="totalScheduleInfo"></span>
 		</div>
@@ -41,19 +26,31 @@
 		<div class="tab-content">
 			<div class="tab-pane fade show active" id="calendarTab">
 				<div class="row px-0">
-					<div class="col-lg-2 col-sm-6">
+					<div class="col-lg-2 col-sm-6 mb-10">
 						<div class="form-group">
 							<label for="calendarTab-optionVendorCar" class="control-label">Car Vendor</label>
 							<select id="calendarTab-optionVendorCar" name="calendarTab-optionVendorCar" class="form-control" option-all="All Vendor"></select>
 						</div>
 					</div>
-					<div class="col-lg-2 col-sm-6">
+					<div class="col-lg-2 col-sm-6 mb-10">
 						<div class="form-group">
 							<label for="calendarTab-optionCarType" class="control-label">Car Type</label>
 							<select id="calendarTab-optionCarType" name="calendarTab-optionCarType" class="form-control" option-all="All Car Type"></select>
 						</div>
 					</div>
-					<div class="col-lg-8 col-sm-12">
+					<div class="col-lg-2 col-sm-6 mb-10">
+						<div class="form-group">
+							<label for="calendarTab-startDate" class="control-label">Date Schedule</label>
+							<input type="text" class="form-control input-date-single mb-10 text-center" id="calendarTab-startDate" name="calendarTab-startDate" value="<?=date('d-m-Y')?>">
+						</div>
+					</div>
+					<div class="col-lg-2 col-sm-6 mb-10">
+						<div class="form-group">
+							<label for="calendarTab-endDate" class="control-label">&nbsp;</label>
+							<input type="text" class="form-control input-date-single text-center" id="calendarTab-endDate" name="calendarTab-endDate" value="<?=$next7DayDate?>">
+						</div>
+					</div>
+					<div class="col-lg-4 col-sm-12 mb-10">
 						<div class="form-group">
 							<label for="calendarTab-searchKeyword" class="control-label">Search by Brand / Model / Plat Number / Color</label>
 							<input type="text" class="form-control" id="calendarTab-searchKeyword" name="calendarTab-searchKeyword" value="" placeholder="Type something and press ENTER to search">
@@ -73,6 +70,31 @@
 			</div>
 			<div class="tab-pane fade" id="reservationTab">
 				<div class="row border-bottom pb-5 mb-20 px-0">
+					<div class="col-lg-2 col-sm-4">
+						<div class="form-group">
+							<label for="reservationTab-optionMonth" class="control-label">Month</label>
+							<select id="reservationTab-optionMonth" name="calendarTab-optionMonth" class="form-control"></select>
+						</div>
+					</div>
+					<div class="col-lg-1 col-sm-3">
+						<div class="form-group">
+							<label for="reservationTab-optionYear" class="control-label">Year</label>
+							<select id="reservationTab-optionYear" name="calendarTab-optionYear" class="form-control"></select>
+						</div>
+					</div>
+					<div class="col-lg-2 col-sm-5">
+						<div class="form-group">
+							<label for="reservationTab-dateSchedule" class="control-label">Schedule Date</label>
+							<div class="input-group">
+								<input type="text" class="form-control input-date-single text-center" id="reservationTab-dateSchedule" name="reservationTab-dateSchedule" aria-describedby="iconDateSchedule">
+								<div class="input-group-append">
+									<span class="input-group-text iconInputDate" id="iconDateSchedule">
+										<i class="fa fa-calendar"></i>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
 					<div class="col-lg-2 col-sm-6">
 						<div class="form-group">
 							<label for="reservationTab-optionSource" class="control-label">Source</label>
@@ -81,27 +103,21 @@
 					</div>
 					<div class="col-lg-2 col-sm-6">
 						<div class="form-group">
-							<label for="reservationTab-dateSchedule" class="control-label">Schedule Date</label>
-							<div class="input-group">
-								<input type="text" class="form-control input-date-single mb-10 text-center" id="reservationTab-dateSchedule" name="reservationTab-dateSchedule" aria-describedby="iconDateSchedule">
-								<div class="input-group-append mb-10">
-									<span class="input-group-text iconInputDate" id="iconDateSchedule">
-										<i class="fa fa-calendar"></i>
-									</span>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-lg-2 col-sm-8">
-						<div class="form-group">
 							<label for="reservationTab-bookingCode" class="control-label">Booking Code</label>
-							<input type="text" class="form-control mb-10" id="reservationTab-bookingCode" name="reservationTab-bookingCode">
+							<input type="text" class="form-control" id="reservationTab-bookingCode" name="reservationTab-bookingCode">
 						</div>
 					</div>
-					<div class="col-lg-6 col-sm-8">
+					<div class="col-lg-3 col-sm-12">
 						<div class="form-group">
 							<label for="reservationTab-searchKeyword" class="control-label">Search by Customer Name / Product Details / Notes</label>
 							<input type="text" class="form-control" id="reservationTab-searchKeyword" name="reservationTab-searchKeyword" value="" placeholder="Type something and press ENTER to search">
+						</div>
+					</div>
+					<div class="col-sm-12 mb-10">
+						<div class="form-group">
+							<label class="adomx-checkbox">
+								<input type="checkbox" id="reservationTab-cbShowUnscheduledOnly" name="reservationTab-cbShowUnscheduledOnly" value="1"> <i class="icon"></i> <b>Show unscheduled booking only</b>
+							</label>
 						</div>
 					</div>
 				</div>
@@ -348,9 +364,13 @@
 				<div class="row pt-10">
 					<div class="col-lg-6 col-sm-12" style="border-right: 1px solid #e0e0e0;">
 						<div class="row">
-							<div class="col-sm-12 mb-10">
+							<div class="col-sm-6 mb-10">
 								<h6 class="mb-0">Source</h6>
 								<p id="detailSchedule-source">-</p>
+							</div>
+							<div class="col-sm-6 mb-10">
+								<h6 class="mb-0">Booking Code</h6>
+								<p id="detailSchedule-bookingCode">-</p>
 							</div>
 							<div class="col-sm-12 mb-10">
 								<h6 class="mb-0">Title</h6>
@@ -419,7 +439,10 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="button button-danger" id="removeScheduleCar" data-idScheduleCar="0" data-detailCarVendor="" data-detailReservation="">Delete Schedule</button>
+				<div class="mr-auto">
+					<button type="button" class="button button-warning mr-1" id="removeScheduleCar" data-idScheduleCar="0" data-detailCarVendor="" data-detailReservation="">Delete Schedule</button>
+					<button type="button" class="button button-danger d-none" id="removeAllScheduleCar" data-idReservation="0" data-detailCarVendor="" data-detailReservation="" data-detailDateSchedule="">Delete All Schedule (<span id="detailSchedule-allScheduleNumber"></span>)</button>
+				</div>
 				<button type="button" class="button button-default" data-dismiss="modal">Close</button>
 			</div>
 		</form>
@@ -647,6 +670,10 @@
 
 .dropOffPickUpTextArea {
   height: 90px !important;
+}
+
+.border-right-pickup-car {
+  border-right: 8px solid #000;
 }
 </style>
 <script>

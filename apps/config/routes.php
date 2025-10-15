@@ -310,6 +310,7 @@ $route['schedule/carSchedule/getDetailSchedule']['POST']										= 'Schedule/Ca
 $route['schedule/carSchedule/getDetailDayOff']['POST']											= 'Schedule/CarSchedule/getDetailDayOff';
 $route['schedule/carSchedule/APIDeleteCarSchedule/(:any)']['GET']								= 'Schedule/CarSchedule/APIDeleteCarSchedule/$1';
 $route['schedule/carSchedule/deleteCarSchedule']['POST']										= 'Schedule/CarSchedule/deleteCarSchedule';
+$route['schedule/carSchedule/deleteAllCarSchedule']['POST']										= 'Schedule/CarSchedule/deleteAllCarSchedule';
 $route['schedule/carSchedule/deleteCarDayOff']['POST']											= 'Schedule/CarSchedule/deleteCarDayOff';
 $route['schedule/carSchedule/getDataDropOffPickUpSchedule']['POST']								= 'Schedule/CarSchedule/getDataDropOffPickUpSchedule';
 $route['schedule/carSchedule/getDetailDropOffPickUpSchedule']['POST']							= 'Schedule/CarSchedule/getDetailDropOffPickUpSchedule';
