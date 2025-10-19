@@ -41,9 +41,111 @@ class AIAgentService extends CI_controller {
 		echo 'Forbidden!';
 		die();
 	}
+	
+	public function cronEBookingCoinNonDriver(){
+		$this->load->model('MainOperation');
+		$this->load->model('ModelAIAgentService');
+		
+		$dateTimeNow 			=	new DateTime();
+		$dateTimeMinus12Hours	=	clone $dateTimeNow->modify('-12 hours');
+		$dateTimeMinus18Hours	=	clone $dateTimeNow->modify('-18 hours');
+		$dateTimeMinus12Hours	=	$dateTimeMinus12Hours->format('Y-m-d H:i:s');
+		$dateTimeMinus18Hours	=	$dateTimeMinus18Hours->format('Y-m-d H:i:s');
+		
+		$dataEBooking	=	$this->ModelAIAgentService->getDataEBookingEarnCoin($dateTimeMinus12Hours, $dateTimeMinus18Hours);
+		if($dataEBooking){
+			foreach($dataEBooking as $keyEBooking){
+				$idReservation	=	$keyEBooking->IDRESERVATION;
+				$bookingCode	=	$keyEBooking->BOOKINGCODE;
+				$arrInsert		=	[
+					'IDRESERVATION'	=>	$idReservation,
+					'EXECUTETYPE'	=>	2,
+					'DATETIMEINSERT'=>	date('Y-m-d H:i:s'),
+					'STATUS'		=>	0
+				];
+				
+				$this->MainOperation->addData('t_ebookingcoin', $arrInsert);
+			}
+		}
+		
+		$this->executeEBookingCoinEarned();
+		echo "Done - ".date('Y-m-d H:i:s');
+	}
+	
+	private function executeEBookingCoinEarned(){
+		$dataExecuteEBooking=	$this->ModelAIAgentService->getDataExecuteEBookingCoinEarned();
+		
+		if($dataExecuteEBooking){
+			$timeStamp		=	time();
+			foreach($dataExecuteEBooking as $keyExecuteEBooking){
+				$idEBookingCoin	=	$keyExecuteEBooking->IDEBOOKINGCOIN;
+				$bookingCode	=	$keyExecuteEBooking->BOOKINGCODE;
+				$dataJSON       =   json_encode(['booking_code'=>$bookingCode, 'timestamp'=>$timeStamp]);
+				$privateKey     =   ROKET_ECOMMERCE_PRIVATE_KEY;
+				$hmacSignature  =   hash_hmac('sha256', $dataJSON, $privateKey);
+				$procUpdateCoin	=	$this->updateCoinBookingEcommerce($bookingCode, $hmacSignature, $timeStamp);
+				$httpCode		=	$procUpdateCoin['httpCode'];
+				$response		=	$procUpdateCoin['response'];
+				$arrUpdateCoin	=	[
+					'EXECUTETYPE'		=>	2,
+					'EXECUTEBY'			=>	'Auto System',
+					'DATETIMEEXECUTE'	=>	date('Y-m-d H:i:s'),
+					'APIRESPONSE'		=>	$response,
+					'STATUS'			=>	0
+				];
+				
+				switch(intval($httpCode)){
+					case 200	:	$arrUpdateCoin['STATUS']	=	1; break;
+					case 401	:	$arrUpdateCoin['STATUS']	=	-1; break;
+					case 409	:	$arrUpdateCoin['STATUS']	=	1; break;
+				}
+				
+				$this->MainOperation->updateData('t_ebookingcoin', $arrUpdateCoin, 'IDEBOOKINGCOIN', $idEBookingCoin);
+				echo $bookingCode."<br/>";
+				echo $httpCode."<br/>";
+				echo json_encode($response)."<br/>";
+			}
+		}
+		
+		return true;
+	}
+	
+	private function updateCoinBookingEcommerce($bookingCode, $hmacSignature, $timeStamp){
+		$response	=	"";
+		$httpCode	=	500;
+
+		// try {
+		// 	$curl	=	curl_init();
+		// 	curl_setopt_array($curl, array(
+		// 	  CURLOPT_URL				=>	ROKET_ECOMMERCE_API_BASE_URL.'/api/customer/coin/earn-from-booking?booking_code='.$bookingCode,
+		// 	  CURLOPT_RETURNTRANSFER	=>	true,
+		// 	  CURLOPT_ENCODING			=>	'',
+		// 	  CURLOPT_MAXREDIRS			=>	10,
+		// 	  CURLOPT_TIMEOUT			=>	0,
+		// 	  CURLOPT_FOLLOWLOCATION	=>	true,
+		// 	  CURLOPT_HTTP_VERSION		=>	CURL_HTTP_VERSION_1_1,
+		// 	  CURLOPT_CUSTOMREQUEST		=>	'POST',
+		// 	  CURLOPT_HTTPHEADER		=>	array(
+		// 		'BST-Public-Key: '.ROKET_ECOMMERCE_PUBLIC_KEY,
+		// 		'BST-Signature: '.$hmacSignature,
+		// 		'BST-Timestamp: '.$timeStamp
+		// 	  ),
+		// 	));
+
+		// 	$response	=	curl_exec($curl);
+		// 	$httpCode	=	curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		// 	curl_close($curl);
+		// } catch (Exception $e) {
+		// }
+		
+		return [
+			'httpCode'	=>	$httpCode,
+			'response'	=>	json_encode($response)
+		];
+	}
 
 	public function readKlookBadReviewMail(){
-		$this->load->model('ModelCron');
+		$this->load->model('ModelAIAgentService');
 		
 		$search		=   new SearchExpression();
 		$search->addCondition(new From(MAIL_KLOOK_BAD_REVIEW_SENDER_ADDRESS));
@@ -131,7 +233,7 @@ class AIAgentService extends CI_controller {
 						$dataJSON       =   json_encode(['timestamp'=>$timeStamp]);
 						$privateKey     =   ROKET_CS_AI_AGENT_PRIVATE_KEY;
 						$hmacSignature  =   hash_hmac('sha256', $dataJSON, $privateKey);
-						$isDriverOwnCar	=	$this->ModelCron->isDriverHandleOwnCarByBookingCode($bookingCode);
+						$isDriverOwnCar	=	$this->ModelAIAgentService->isDriverHandleOwnCarByBookingCode($bookingCode);
 						$arrPostData	=	[
 							'review'		=>	$reviewContent,
 							'booking_code'	=>	$bookingCode,
