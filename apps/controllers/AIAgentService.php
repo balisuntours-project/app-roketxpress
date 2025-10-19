@@ -114,29 +114,29 @@ class AIAgentService extends CI_controller {
 		$response	=	"";
 		$httpCode	=	500;
 
-		// try {
-		// 	$curl	=	curl_init();
-		// 	curl_setopt_array($curl, array(
-		// 	  CURLOPT_URL				=>	ROKET_ECOMMERCE_API_BASE_URL.'/api/customer/coin/earn-from-booking?booking_code='.$bookingCode,
-		// 	  CURLOPT_RETURNTRANSFER	=>	true,
-		// 	  CURLOPT_ENCODING			=>	'',
-		// 	  CURLOPT_MAXREDIRS			=>	10,
-		// 	  CURLOPT_TIMEOUT			=>	0,
-		// 	  CURLOPT_FOLLOWLOCATION	=>	true,
-		// 	  CURLOPT_HTTP_VERSION		=>	CURL_HTTP_VERSION_1_1,
-		// 	  CURLOPT_CUSTOMREQUEST		=>	'POST',
-		// 	  CURLOPT_HTTPHEADER		=>	array(
-		// 		'BST-Public-Key: '.ROKET_ECOMMERCE_PUBLIC_KEY,
-		// 		'BST-Signature: '.$hmacSignature,
-		// 		'BST-Timestamp: '.$timeStamp
-		// 	  ),
-		// 	));
+		try {
+			$curl	=	curl_init();
+			curl_setopt_array($curl, array(
+			  CURLOPT_URL				=>	ROKET_ECOMMERCE_API_BASE_URL.'/api/customer/coin/earn-from-booking?booking_code='.$bookingCode,
+			  CURLOPT_RETURNTRANSFER	=>	true,
+			  CURLOPT_ENCODING			=>	'',
+			  CURLOPT_MAXREDIRS			=>	10,
+			  CURLOPT_TIMEOUT			=>	0,
+			  CURLOPT_FOLLOWLOCATION	=>	true,
+			  CURLOPT_HTTP_VERSION		=>	CURL_HTTP_VERSION_1_1,
+			  CURLOPT_CUSTOMREQUEST		=>	'POST',
+			  CURLOPT_HTTPHEADER		=>	array(
+				'BST-Public-Key: '.ROKET_ECOMMERCE_PUBLIC_KEY,
+				'BST-Signature: '.$hmacSignature,
+				'BST-Timestamp: '.$timeStamp
+			  ),
+			));
 
-		// 	$response	=	curl_exec($curl);
-		// 	$httpCode	=	curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		// 	curl_close($curl);
-		// } catch (Exception $e) {
-		// }
+			$response	=	curl_exec($curl);
+			$httpCode	=	curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			curl_close($curl);
+		} catch (Exception $e) {
+		}
 		
 		return [
 			'httpCode'	=>	$httpCode,
