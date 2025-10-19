@@ -114,8 +114,10 @@ $route['cron/cronScanCustomerContact']['GET']													= 'Cron/cronScanCustom
 $route['cron/apiScanCustomerContact/(:any)']['GET']												= 'Cron/apiScanCustomerContact/$1';
 $route['cron/cronEBookingCoinNonDriver']['GET']													= 'Cron/cronEBookingCoinNonDriver';
 $route['cron/calculateRatingPointAndRecapAdditionalIncomeDriver']['GET']						= 'Cron/calculateRatingPointAndRecapAdditionalIncomeDriver';
-$route['cron/readKlookBadReviewMail']['GET']													= 'Cron/readKlookBadReviewMail';
 $route['crontest/cronScanCustomerContact']['GET']												= 'CronTest/cronScanCustomerContact';
+
+$route['AIAgentService/updateReservationDetail']['POST']										= 'AIAgentService/updateReservationDetail';
+$route['AIAgentService/readKlookBadReviewMail']['GET']											= 'AIAgentService/readKlookBadReviewMail';
 
 $route['dashboard/getDataDashboard']['POST']													= 'Dashboard/getDataDashboard';
 

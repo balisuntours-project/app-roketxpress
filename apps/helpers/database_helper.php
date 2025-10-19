@@ -41,6 +41,17 @@ function switchMySQLErrorCode($errCode, $token, $arrAdditional = array()){
 	
 }
 
+function switchMySQLErrorCodeHttpResponse($errCode, $arrAdditional = array()){
+	switch($errCode){
+		case 0		:	returnHttpResponse(304, 'No data changes', $arrAdditional); break;
+		case 1062	:	returnHttpResponse(409, 'There is a duplication of input data', $arrAdditional); break;
+		case 1054	:	returnHttpResponse(500, 'Database internal script error', $arrAdditional); break;
+		default		:	returnHttpResponse(500, 'Unkown database internal error', $arrAdditional); break;
+	}
+	
+	return true;	
+}
+
 function createMD5Encode($string){
 	
 	$ci		=&	get_instance();

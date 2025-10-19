@@ -964,4 +964,16 @@ class ModelReservation extends CI_Model {
 		if(isset($row)) return $row;
 		return false;		
 	}
+
+	public function getReservationRawDetail($bookingCode){
+		$query	=	$this->db->query(
+						"SELECT * FROM t_reservation
+						WHERE BOOKINGCODE = '".$bookingCode."'
+						LIMIT 1"
+					);
+		$row	=	$query->row_array();
+
+		if(isset($row)) return $row;
+		return false;		
+	}
 }
