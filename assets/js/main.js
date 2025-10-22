@@ -153,7 +153,7 @@ function generateTotalUndeterminedScheduleElem(totalUndeterminedSchedule){
 	if($("#menuRV").length > 0){
 		$("#containerUndeterminedSchedule").remove();
 		if(totalUndeterminedSchedule > 0){
-			$("#groupMenuSchedule").after('<span class="badge badge-warning badge-pill ml-auto mr-4" id="containerUndeterminedSchedule">'+numberFormat(totalUndeterminedSchedule)+'</span>');
+			$("#groupMenuSchedule-Driver").after('<span class="badge badge-warning badge-pill ml-auto mr-4" id="containerUndeterminedSchedule">'+numberFormat(totalUndeterminedSchedule)+'</span>');
 			$('[data-toggle="tooltip"]').tooltip();
 		}
 	}
