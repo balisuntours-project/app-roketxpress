@@ -279,6 +279,7 @@ class AIAgentService extends CI_controller {
 	}
 
     public function updateReservationDetail(){
+		$this->load->helper('httpResponse');
         $this->checkSignature();
 		$bookingCode    =   $this->postVar['bookingCode'] ?? null;
 
@@ -311,7 +312,10 @@ class AIAgentService extends CI_controller {
         $this->load->model('MainOperation');
         $procUpdate =   $this->MainOperation->updateData('t_reservation', $arrUpdate, array("BOOKINGCODE" => $bookingCode));
 
-		if(!$procUpdate['status']) switchMySQLErrorCodeHttpResponse($procUpdate['errCode']);
+		if(!$procUpdate['status']) {
+			if($procUpdate['errCode'] == 0) returnHttpResponse(200, 'Reservation detail updated successfully');
+			else switchMySQLErrorCodeHttpResponse($procUpdate['errCode']);
+		}
         //ADD LOG/HISTORY RESERVATION UPDATE
         returnHttpResponse(200, 'Reservation detail updated successfully');
     }

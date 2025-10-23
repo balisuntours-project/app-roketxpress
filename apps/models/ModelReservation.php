@@ -954,7 +954,7 @@ class ModelReservation extends CI_Model {
 								CUSTOMERNAME AS customerName, CUSTOMERCONTACT AS customerContact, CUSTOMEREMAIL AS customerEmail, HOTELNAME AS hotelName, PICKUPLOCATION AS pickupLocation,
 								DROPOFFLOCATION AS dropoffLocation, NUMBEROFADULT AS numberOfAdult, NUMBEROFCHILD AS numberOfChild, NUMBEROFINFANT AS numberOfInfant, SPECIALREQUEST AS specialRequest,
 								REMARK AS remark, TOURPLAN AS tourPlan, URLDETAILPRODUCT AS urlDetailProduct, URLPICKUPLOCATION AS urlPickupLocation, '[]' AS handleDriver, '[]' AS handleVendorTicket,
-								IFNULL(IF(IDAREA = -1, 0, 1), 0) AS transportStatus, '' AS transportType
+								IFNULL(IF(IDAREA = -1, 0, 1), 0) AS transportStatus, '' AS transportType, DETAILLUGGAGE AS detailLuggage, DETAILFLIGHT AS detailFlight
 						FROM t_reservation
 						WHERE BOOKINGCODE = '".$bookingCode."'
 						LIMIT 1"
